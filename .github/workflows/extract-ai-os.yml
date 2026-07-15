@@ -3,6 +3,8 @@ name: Extract and prepare Azez AI OS
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - 'Azez_AI_OS_v0.11.0_Signed.zip'
       - '.github/workflows/extract-ai-os.yml'
@@ -66,3 +68,5 @@ jobs:
 
           git commit -m 'Deploy signed Azez AI OS source'
           git push origin HEAD:main
+
+# trigger 2
