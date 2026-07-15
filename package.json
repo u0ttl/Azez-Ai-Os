@@ -1,0 +1,10 @@
+{
+  "name": "azez-ai-os-chemistry-3d-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "build": "node scripts/validate-site.mjs"
+  }
+}
