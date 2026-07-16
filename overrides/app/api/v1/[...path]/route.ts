@@ -1,4 +1,4 @@
-import { injectAzezApi } from "@azez-api-source/serverless";
+import { injectAzezApi } from "../../../_api-source/serverless";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
