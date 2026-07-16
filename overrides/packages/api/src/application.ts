@@ -14,12 +14,37 @@ interface ApiApplicationOptions {
   serverless?: boolean;
 }
 
-function productionWebOrigin(): string {
-  if (process.env.WEB_ORIGIN) return process.env.WEB_ORIGIN;
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+function normalizeOrigin(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  try {
+    return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`).origin;
+  } catch {
+    return undefined;
   }
-  return "http://localhost:3000";
+}
+
+function allowedWebOrigins(): Set<string> {
+  const origins = new Set<string>();
+  const configured = process.env.WEB_ORIGIN?.split(",") ?? [];
+  const candidates = [
+    ...configured,
+    process.env.NEXT_PUBLIC_WEB_ORIGIN,
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ];
+
+  for (const candidate of candidates) {
+    const origin = normalizeOrigin(candidate);
+    if (origin) origins.add(origin);
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    origins.add("http://localhost:3000");
+    origins.add("http://127.0.0.1:3000");
+  }
+  return origins;
 }
 
 function swaggerEnabled(): boolean {
@@ -54,7 +79,20 @@ export async function createApiApplication(
   });
 
   app.setGlobalPrefix("v1");
-  app.enableCors({ origin: productionWebOrigin(), credentials: true });
+  const webOrigins = allowedWebOrigins();
+  app.enableCors({
+    credentials: true,
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ): void => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      callback(null, webOrigins.has(origin));
+    },
+  });
 
   const server = app.getHttpAdapter().getInstance() as FastifyInstance;
   const requestStartedAt = new WeakMap<FastifyRequest, bigint>();
@@ -103,7 +141,7 @@ export async function createApiApplication(
     const config = new DocumentBuilder()
       .setTitle("Azez AI OS API")
       .setDescription("واجهات منصة Azez AI OS متعددة المؤسسات")
-      .setVersion(process.env.BUILD_VERSION ?? "0.11.0")
+      .setVersion(process.env.BUILD_VERSION?.trim() || "0.12.0")
       .addCookieAuth("azez_session")
       .build();
     const document = SwaggerModule.createDocument(app, config);
