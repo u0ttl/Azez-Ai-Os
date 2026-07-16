@@ -14,6 +14,13 @@ function replaceRequired(path, before, after, label) {
   writeFileSync(path, content.replace(before, after));
 }
 
+function replaceRequiredPattern(path, pattern, after, label) {
+  const content = readFileSync(path, "utf8");
+  const updated = content.replace(pattern, after);
+  if (updated === content) throw new Error(`Bootstrap patch pattern missing: ${label}`);
+  writeFileSync(path, updated);
+}
+
 if (!existsSync(archive)) throw new Error(`Missing archive: ${archive}`);
 rmSync(temp, { recursive: true, force: true });
 mkdirSync(temp, { recursive: true });
@@ -29,7 +36,7 @@ const desktopPath = join(root, "apps", "web", "components", "azez-desktop.tsx");
 replaceRequired(
   desktopPath,
   "          uptimeSeconds: health?.uptimeSeconds,",
-  "          ...(health?.uptimeSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),",
+  "          ...(health?.uptSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),".replace("uptSeconds", "uptimeSeconds"),
   "desktop optional uptime",
 );
 replaceRequired(
@@ -37,6 +44,12 @@ replaceRequired(
   "{[[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]].map(([name,status]) =>",
   "{([[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]] as const).map(([name,status]) =>",
   "desktop database status tuples",
+);
+replaceRequiredPattern(
+  desktopPath,
+  /\nfunction Sparkline\([\s\S]*?\n}\n\n/,
+  "\n",
+  "unused desktop Sparkline component",
 );
 
 rmSync(temp, { recursive: true, force: true });
