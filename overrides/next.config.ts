@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
       "@azez-api-source": path.resolve(process.cwd(), "packages/api/src"),
       "class-transformer/storage": "class-transformer/cjs/storage",
     };
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".ts", ".tsx", ".js"],
+      ".mjs": [".mts", ".mjs"],
+      ".cjs": [".cts", ".cjs"],
+    };
     if (isServer) {
       config.externals.push({
         "@nestjs/microservices/microservices-module": "commonjs @nestjs/microservices/microservices-module",
