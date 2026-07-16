@@ -32,7 +32,9 @@ export class HealthService {
     return {
       service: SERVICE_NAME,
       version: runtimeEnv("BUILD_VERSION") ?? "0.12.0",
-      commit: runtimeEnv("BUILD_COMMIT") ?? "development",
+      commit: runtimeEnv("BUILD_COMMIT") ?? runtimeEnv("VERCEL_GIT_COMMIT_SHA") ?? "development",
+      branch: runtimeEnv("BUILD_BRANCH") ?? runtimeEnv("VERCEL_GIT_COMMIT_REF") ?? null,
+      deployment: runtimeEnv("VERCEL_DEPLOYMENT_ID") ?? runtimeEnv("VERCEL_URL") ?? null,
       builtAt: runtimeEnv("BUILD_TIMESTAMP") ?? null,
     };
   }
