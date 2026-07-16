@@ -1,0 +1,43 @@
+FROM node:24-bookworm-slim AS source
+WORKDIR /workspace
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends unzip ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+COPY Azez_AI_OS_v0.11.0_Signed.zip /tmp/azez-ai-os.zip
+RUN mkdir -p /workspace/app \
+  && unzip -q /tmp/azez-ai-os.zip -d /tmp/azez-ai-os \
+  && cp -a /tmp/azez-ai-os/azez-ai-os/. /workspace/app/ \
+  && rm -rf /tmp/azez-ai-os /tmp/azez-ai-os.zip
+
+FROM node:24-bookworm-slim AS dependencies
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+COPY --from=source /workspace/app/package.json ./package.json
+COPY --from=source /workspace/app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=source /workspace/app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=source /workspace/app/turbo.json ./turbo.json
+COPY --from=source /workspace/app/tsconfig.base.json ./tsconfig.base.json
+COPY --from=source /workspace/app/apps/api/package.json ./apps/api/package.json
+COPY --from=source /workspace/app/apps/web/package.json ./apps/web/package.json
+COPY --from=source /workspace/app/packages/database/package.json ./packages/database/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+FROM dependencies AS builder
+COPY --from=source /workspace/app/. .
+RUN pnpm --filter @azez/api... build
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production \
+    API_HOST=0.0.0.0 \
+    TRUST_PROXY=true
+RUN groupadd --system azez && useradd --system --gid azez --home /app azez
+COPY --from=builder --chown=azez:azez /app/node_modules ./node_modules
+COPY --from=builder --chown=azez:azez /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder --chown=azez:azez /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=azez:azez /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=azez:azez /app/packages/database ./packages/database
+COPY --from=builder --chown=azez:azez /app/package.json ./package.json
+USER azez
+EXPOSE 10000
+CMD ["sh", "-c", "export API_PORT=${PORT:-10000}; ./packages/database/node_modules/.bin/prisma migrate deploy --config packages/database/prisma.config.ts && node apps/api/dist/src/main.js"]
