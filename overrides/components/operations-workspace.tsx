@@ -69,7 +69,11 @@ export function OperationsWorkspace({ mode }: { mode: Mode }) {
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
-    setSnapshot((current) => ({ ...current, loading: true, error: undefined }));
+    setSnapshot((current) => {
+      const next: Snapshot = { ...current, loading: true };
+      delete next.error;
+      return next;
+    });
     try {
       const [healthResponse, readyResponse, versionResponse, meResponse] = await Promise.all([
         fetch(`${apiBase}/health`, { cache: "no-store" }),
