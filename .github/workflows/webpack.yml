@@ -44,18 +44,44 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
 
-      - name: Preview deployment credentials preflight
-        env:
-          HAS_VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN != '' }}
-          HAS_VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID != '' }}
-          HAS_VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID != '' }}
-          HAS_DATABASE_URL: ${{ secrets.DATABASE_URL != '' }}
-          HAS_REDIS_URL: ${{ secrets.REDIS_URL != '' }}
-          HAS_SESSION_SECRET: ${{ secrets.SESSION_SECRET != '' }}
-        run: |
-          echo "VERCEL_TOKEN configured: ${HAS_VERCEL_TOKEN}"
-          echo "VERCEL_ORG_ID configured: ${HAS_VERCEL_ORG_ID}"
-          echo "VERCEL_PROJECT_ID configured: ${HAS_VERCEL_PROJECT_ID}"
-          echo "DATABASE_URL configured: ${HAS_DATABASE_URL}"
-          echo "REDIS_URL configured: ${HAS_REDIS_URL}"
-          echo "SESSION_SECRET configured: ${HAS_SESSION_SECRET}"
+      - name: VERCEL_TOKEN present
+        if: ${{ secrets.VERCEL_TOKEN != '' }}
+        run: echo configured
+      - name: VERCEL_TOKEN absent
+        if: ${{ secrets.VERCEL_TOKEN == '' }}
+        run: echo missing
+
+      - name: VERCEL_ORG_ID present
+        if: ${{ secrets.VERCEL_ORG_ID != '' }}
+        run: echo configured
+      - name: VERCEL_ORG_ID absent
+        if: ${{ secrets.VERCEL_ORG_ID == '' }}
+        run: echo missing
+
+      - name: VERCEL_PROJECT_ID present
+        if: ${{ secrets.VERCEL_PROJECT_ID != '' }}
+        run: echo configured
+      - name: VERCEL_PROJECT_ID absent
+        if: ${{ secrets.VERCEL_PROJECT_ID == '' }}
+        run: echo missing
+
+      - name: DATABASE_URL present
+        if: ${{ secrets.DATABASE_URL != '' }}
+        run: echo configured
+      - name: DATABASE_URL absent
+        if: ${{ secrets.DATABASE_URL == '' }}
+        run: echo missing
+
+      - name: REDIS_URL present
+        if: ${{ secrets.REDIS_URL != '' }}
+        run: echo configured
+      - name: REDIS_URL absent
+        if: ${{ secrets.REDIS_URL == '' }}
+        run: echo missing
+
+      - name: SESSION_SECRET present
+        if: ${{ secrets.SESSION_SECRET != '' }}
+        run: echo configured
+      - name: SESSION_SECRET absent
+        if: ${{ secrets.SESSION_SECRET == '' }}
+        run: echo missing
