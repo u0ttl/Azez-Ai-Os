@@ -48,4 +48,4 @@ jobs:
         run: npx --yes pnpm@11.7.0 --filter @azez/api test
 
       - name: Run web unit tests
-        run: npx --yes pnpm@11.7.0 exec vitest run lib/operations.spec.ts lib/product.spec.ts
+        run: npx --yes pnpm@11.7.0 exec vitest run lib/api-client.spec.ts lib/operations.spec.ts lib/product.spec.ts
