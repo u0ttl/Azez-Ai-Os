@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -5,7 +6,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: [
-    "@azez/api",
     "@nestjs/common",
     "@nestjs/core",
     "@nestjs/platform-fastify",
@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   webpack(config, { isServer }) {
     config.resolve.alias = {
       ...config.resolve.alias,
+      "@azez-api-source": path.resolve(process.cwd(), "packages/api/src"),
       "class-transformer/storage": "class-transformer/cjs/storage",
     };
     if (isServer) {
