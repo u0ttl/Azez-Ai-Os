@@ -29,15 +29,33 @@ Production changes: none
 - Email verification and password-reset links use the active Preview origin instead of falling back to localhost.
 - Required Redis absence keeps liveness available, makes readiness fail closed, and keeps distributed operations unavailable.
 - Two pre-existing `exactOptionalPropertyTypes` errors in the embedded desktop source are patched deterministically during bootstrap.
+- The unused desktop Sparkline component is removed deterministically during bootstrap.
+- Operations Workspace was rewritten with strict types and React 19-safe asynchronous initialization.
+- Production dependency overrides pin patched `postcss` and `@hono/node-server` releases.
 
-## Verified tests after the fixes
+## Verified quality gates after the fixes
 
-- Web TypeScript gate: passed locally after applying the bootstrap patches.
+- Web TypeScript gate: passed with the same API-route exclusion used by the unified build.
+- Web ESLint gate: passed with zero warnings.
 - Web unit tests: 3 files, 7 tests passed.
+- API ESLint gate: passed with zero warnings.
 - API unit tests: 14 files, 28 tests passed.
-- Bootstrap patch verification: both required desktop replacements were found and applied successfully.
-- CORS TypeScript failure was reproduced locally, corrected, and no longer appears in the API type gate; the remaining local API type errors require Prisma-generated types.
-- Full Prisma generation cannot be reproduced in the restricted local runner because `binaries.prisma.sh` is blocked; GitHub Actions remains the authoritative full-build gate.
+- Production dependency audit: no known vulnerabilities found at moderate-or-higher threshold.
+- Bootstrap patch verification: all required desktop replacements and cleanup patterns were found and applied successfully.
+- Fastify CORS TypeScript failure was reproduced locally and corrected.
+- Full Prisma binary generation cannot be reproduced in the restricted local runner because `binaries.prisma.sh` is blocked; GitHub Actions remains the authoritative full unified-build gate.
+- GitHub Actions status reads are temporarily unavailable through the connected GitHub service because it is returning upstream `502` responses; no success is claimed for the newest commit until that service recovers.
+
+## CI requirements
+
+Preview CI now requires all of the following:
+
+- unified production build
+- production dependency audit with moderate-or-higher failures blocked
+- web ESLint with zero warnings
+- API ESLint with zero warnings
+- API unit tests
+- web unit tests including CSRF lifecycle tests
 
 ## Existing Preview
 
