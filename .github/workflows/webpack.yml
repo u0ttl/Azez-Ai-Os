@@ -1,28 +1,45 @@
-name: NodeJS with Webpack
+name: AZEZ AI OS Preview CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - launch-hardening-0.12.0
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azez-preview-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Unified production build
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
+    timeout-minutes: 20
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
 
-    - name: Build
-      run: |
-        npm install
-        npx webpack
+      - name: Verify bootstrap inputs
+        run: |
+          test -f package.json
+          test -f Azez_AI_OS_v0.11.0_Signed.zip
+          test -f scripts/vercel-bootstrap.mjs
+          test -f scripts/vercel-unified-build.mjs
+
+      - name: Build AZEZ AI OS 0.12.0
+        env:
+          CI: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
