@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    name: Unified build, lint, and unit tests
+    name: Unified build, security, lint, and unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -43,6 +43,9 @@ jobs:
           CI: "true"
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
+
+      - name: Audit production dependencies
+        run: npx --yes pnpm@11.7.0 audit --prod --audit-level=moderate
 
       - name: Lint web application
         run: npx --yes pnpm@11.7.0 exec eslint app components lib --ignore-pattern 'app/api/v1/**' --max-warnings=0
