@@ -16,6 +16,10 @@ async function initializeApi(): Promise<FastifyInstance> {
 function getAzezApiFastify(): Promise<FastifyInstance> {
   globalApi.__azezApiFastify ??= initializeApi().catch((error: unknown) => {
     delete globalApi.__azezApiFastify;
+    const details = error instanceof Error
+      ? { name: error.name, message: error.message, code: (error as Error & { code?: unknown }).code }
+      : { name: "UnknownError", message: String(error) };
+    console.error("AZEZ API initialization failed", details);
     throw error;
   });
   return globalApi.__azezApiFastify;
