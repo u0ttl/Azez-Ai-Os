@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: azez-ai-os-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /v1/health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_LOGGER
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: WEB_ORIGIN
+        value: https://azez-ai-os.vercel.app
+      - key: REDIS_REQUIRED
+        value: "true"
+      - key: SWAGGER_ENABLED
+        value: "true"
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: "false"
+      - key: AI_PROVIDER
+        value: openai
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-small
+      - key: EMBEDDINGS_ENABLED
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: METRICS_TOKEN
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
