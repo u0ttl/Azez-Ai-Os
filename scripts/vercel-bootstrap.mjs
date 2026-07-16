@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { appendFileSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 const root = process.cwd();
 const archive = join(root, "Azez_AI_OS_v0.11.0_Signed.zip");
@@ -31,5 +31,23 @@ for (const entry of readdirSync(source)) {
   });
 }
 
+const previewFiles = [
+  ["preview/app/page.tsx", "apps/web/app/page.tsx"],
+  ["preview/components/os-shell.tsx", "apps/web/components/os-shell.tsx"],
+  ["preview/components/ai-core-scene.tsx", "apps/web/components/ai-core-scene.tsx"],
+  ["preview/web-package.json", "apps/web/package.json"],
+];
+
+for (const [from, to] of previewFiles) {
+  const target = join(root, to);
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(join(root, from), target);
+}
+
+appendFileSync(
+  join(root, "apps/web/app/globals.css"),
+  `\n${await import("node:fs/promises").then((fs) => fs.readFile(join(root, "preview/preview.css"), "utf8"))}\n`,
+);
+
 rmSync(temp, { recursive: true, force: true });
-console.log("Azez AI OS source extracted for Vercel build.");
+console.log("AZEZ AI OS preview source prepared for Vercel build.");
