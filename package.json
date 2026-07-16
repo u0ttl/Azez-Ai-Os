@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/vercel-bootstrap.mjs && npx --yes pnpm@11.7.0 install --frozen-lockfile && npx --yes pnpm@11.7.0 --filter @azez/database build && npx --yes pnpm@11.7.0 --filter @azez/api build && npx --yes pnpm@11.7.0 --filter @azez/web exec next build --webpack && rm -rf .next && cp -a apps/web/.next .next"
+    "build": "node scripts/vercel-unified-build.mjs"
   },
   "dependencies": {
     "next": "16.2.10",
