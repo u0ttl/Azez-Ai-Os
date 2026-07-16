@@ -82,16 +82,8 @@ export async function createApiApplication(
   const webOrigins = allowedWebOrigins();
   app.enableCors({
     credentials: true,
-    origin: (
-      origin: string | undefined,
-      callback: (error: Error | null, allow?: boolean) => void,
-    ): void => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      callback(null, webOrigins.has(origin));
-    },
+    origin: async (origin: string | undefined): Promise<boolean> =>
+      origin === undefined || webOrigins.has(origin),
   });
 
   const server = app.getHttpAdapter().getInstance() as FastifyInstance;
