@@ -6,7 +6,8 @@ import { MalwareScannerService } from "../files/malware-scanner.service.js";
 const SERVICE_NAME = "azez-ai-os-api";
 
 function runtimeEnv(name: string): string | undefined {
-  return globalThis.process?.env?.[name];
+  const value = globalThis.process?.env?.[name]?.trim();
+  return value ? value : undefined;
 }
 
 @Injectable()
