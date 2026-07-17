@@ -30,7 +30,8 @@ jobs:
           test -f scripts/vercel-unified-build.mjs
           test -f Azez_AI_OS_v0.11.0_Signed.zip
           test -d overrides
-          test -f apps/web/components/azez-desktop.tsx
+          test -f overrides/components/operations-workspace.tsx
+          test -f overrides/packages/api/src/serverless.ts
 
       - name: Create complete deploy archive
         shell: bash
