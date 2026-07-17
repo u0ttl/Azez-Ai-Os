@@ -1,6 +1,9 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import Image from "next/image";
+import type { ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import styles from "./browser-tools-workspace.module.css";
 
 type Lang = "en" | "ar";
 
@@ -52,17 +55,22 @@ function recognitionConstructor(): SpeechRecognizerConstructor | undefined {
 }
 
 export function VoiceWorkspace({ lang }: { lang: Lang }) {
-  const recognizer = useRef<SpeechRecognizerLike>();
+  const recognizer = useRef<SpeechRecognizerLike | undefined>(undefined);
   const [transcript, setTranscript] = useState("");
   const [interim, setInterim] = useState("");
   const [listening, setListening] = useState(false);
-  const [error, setError] = useState<string>();
-  const supported = Boolean(recognitionConstructor());
+  const [supported, setSupported] = useState(false);
+  const [message, setMessage] = useState<string>();
+
+  useEffect(() => {
+    setSupported(Boolean(recognitionConstructor()));
+    return () => recognizer.current?.abort();
+  }, []);
 
   function start() {
     const Constructor = recognitionConstructor();
     if (!Constructor) {
-      setError(lang === "ar" ? "المتصفح لا يدعم الإدخال الصوتي." : "This browser does not support voice input.");
+      setMessage(lang === "ar" ? "المتصفح لا يدعم الإدخال الصوتي." : "This browser does not support voice input.");
       return;
     }
     recognizer.current?.abort();
@@ -83,12 +91,12 @@ export function VoiceWorkspace({ lang }: { lang: Lang }) {
       setInterim(interimText);
     };
     instance.onerror = (event) => {
-      setError(lang === "ar" ? `تعذر التعرف على الصوت: ${event.error}` : `Voice recognition failed: ${event.error}`);
+      setMessage(lang === "ar" ? `تعذر التعرف على الصوت: ${event.error}` : `Voice recognition failed: ${event.error}`);
       setListening(false);
     };
     instance.onend = () => setListening(false);
     recognizer.current = instance;
-    setError(undefined);
+    setMessage(undefined);
     setListening(true);
     instance.start();
   }
@@ -101,37 +109,46 @@ export function VoiceWorkspace({ lang }: { lang: Lang }) {
   async function copy() {
     try {
       await navigator.clipboard.writeText(`${transcript}${interim}`.trim());
-      setError(lang === "ar" ? "تم نسخ النص." : "Transcript copied.");
+      setMessage(lang === "ar" ? "تم نسخ النص." : "Transcript copied.");
     } catch {
-      setError(lang === "ar" ? "تعذر نسخ النص تلقائيًا." : "Could not copy the transcript automatically.");
+      setMessage(lang === "ar" ? "تعذر نسخ النص تلقائيًا." : "Could not copy the transcript automatically.");
     }
   }
 
   return (
-    <div className="utility-workspace browser-tool-workspace">
-      <div className={listening ? "voice-orb active" : "voice-orb"} aria-hidden="true">◖</div>
+    <div className={styles.workspace}>
+      <div className={`${styles.voiceOrb} ${listening ? styles.voiceOrbActive : ""}`} aria-hidden="true">
+        <span />
+      </div>
       <h2>{lang === "ar" ? "الإدخال الصوتي المباشر" : "Live voice input"}</h2>
       <p>{supported
-        ? (lang === "ar" ? "ابدأ التسجيل وسيُحوّل المتصفح كلامك إلى نص محليًا." : "Start listening and the browser will transcribe your speech locally.")
-        : (lang === "ar" ? "استخدم Chrome أو Edge لتفعيل Web Speech API." : "Use Chrome or Edge to enable the Web Speech API.")}</p>
+        ? (lang === "ar" ? "ابدأ التسجيل وسيُحوّل المتصفح كلامك إلى نص مباشرة." : "Start listening and the browser will transcribe your speech live.")
+        : (lang === "ar" ? "استخدم Chrome أو Edge لتفعيل الإدخال الصوتي." : "Use Chrome or Edge to enable voice input.")}</p>
       <textarea
+        className={styles.transcript}
         aria-label={lang === "ar" ? "النص المفرغ" : "Transcript"}
         value={`${transcript}${interim ? ` ${interim}` : ""}`}
         onChange={(event) => { setTranscript(event.target.value); setInterim(""); }}
         placeholder={lang === "ar" ? "سيظهر النص هنا…" : "Your transcript will appear here…"}
       />
-      <div className="browser-tool-actions">
-        <button type="button" onClick={listening ? stop : start} disabled={!supported}>{listening ? (lang === "ar" ? "إيقاف" : "Stop") : (lang === "ar" ? "بدء الاستماع" : "Start listening")}</button>
-        <button type="button" onClick={() => { setTranscript(""); setInterim(""); }}>{lang === "ar" ? "مسح" : "Clear"}</button>
-        <button type="button" onClick={() => void copy()} disabled={!transcript && !interim}>{lang === "ar" ? "نسخ" : "Copy"}</button>
+      <div className={styles.actions}>
+        <button type="button" onClick={listening ? stop : start} disabled={!supported}>
+          {listening ? (lang === "ar" ? "إيقاف" : "Stop") : (lang === "ar" ? "بدء الاستماع" : "Start listening")}
+        </button>
+        <button type="button" onClick={() => { setTranscript(""); setInterim(""); }}>
+          {lang === "ar" ? "مسح" : "Clear"}
+        </button>
+        <button type="button" onClick={() => void copy()} disabled={!transcript && !interim}>
+          {lang === "ar" ? "نسخ" : "Copy"}
+        </button>
       </div>
-      {error && <p className="browser-tool-message">{error}</p>}
+      {message && <p className={styles.message} aria-live="polite">{message}</p>}
     </div>
   );
 }
 
 async function inspectImage(file: File, dataUrl: string): Promise<VisionDetails> {
-  const image = new Image();
+  const image = new window.Image();
   image.src = dataUrl;
   await image.decode();
   const sampleWidth = Math.max(1, Math.min(64, image.naturalWidth));
@@ -177,18 +194,18 @@ async function inspectImage(file: File, dataUrl: string): Promise<VisionDetails>
 export function VisionWorkspace({ lang }: { lang: Lang }) {
   const [preview, setPreview] = useState<string>();
   const [details, setDetails] = useState<VisionDetails>();
-  const [error, setError] = useState<string>();
+  const [message, setMessage] = useState<string>();
   const [busy, setBusy] = useState(false);
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError(lang === "ar" ? "اختر ملف صورة صالحًا." : "Choose a valid image file.");
+      setMessage(lang === "ar" ? "اختر ملف صورة صالحًا." : "Choose a valid image file.");
       return;
     }
     setBusy(true);
-    setError(undefined);
+    setMessage(undefined);
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -196,33 +213,44 @@ export function VisionWorkspace({ lang }: { lang: Lang }) {
         reader.onerror = () => reject(reader.error ?? new Error("READ_FAILED"));
         reader.readAsDataURL(file);
       });
+      const inspected = await inspectImage(file, dataUrl);
       setPreview(dataUrl);
-      setDetails(await inspectImage(file, dataUrl));
+      setDetails(inspected);
     } catch {
-      setError(lang === "ar" ? "تعذر تحليل الصورة في المتصفح." : "The browser could not inspect this image.");
+      setMessage(lang === "ar" ? "تعذر تحليل الصورة في المتصفح." : "The browser could not inspect this image.");
     } finally {
       setBusy(false);
+      event.target.value = "";
     }
   }
 
   return (
-    <div className="utility-workspace browser-tool-workspace vision-tool">
+    <div className={`${styles.workspace} ${styles.visionWorkspace}`}>
       <h2>{lang === "ar" ? "فحص الصور المحلي" : "Local image inspection"}</h2>
       <p>{lang === "ar" ? "اختر صورة لقراءة خصائصها الفعلية داخل جهازك دون رفعها إلى خادم." : "Choose an image to inspect its real properties locally without uploading it to a server."}</p>
-      <label className="vision-picker">
+      <label className={styles.picker}>
         <input type="file" accept="image/*" onChange={(event) => void selectImage(event)} />
         <span>{busy ? (lang === "ar" ? "جارٍ التحليل…" : "Inspecting…") : (lang === "ar" ? "اختيار صورة" : "Choose image")}</span>
       </label>
-      {preview && <img className="vision-preview" src={preview} alt={details?.name ?? "Selected image"} />}
+      {preview && details && (
+        <Image
+          className={styles.preview}
+          src={preview}
+          alt={details.name}
+          width={details.width}
+          height={details.height}
+          unoptimized
+        />
+      )}
       {details && (
-        <div className="vision-details">
+        <div className={styles.details}>
           <article><small>{lang === "ar" ? "الملف" : "File"}</small><strong>{details.name}</strong><span>{details.mimeType} · {details.sizeLabel}</span></article>
           <article><small>{lang === "ar" ? "الأبعاد" : "Dimensions"}</small><strong>{details.width} × {details.height}</strong><span>{details.orientation}</span></article>
           <article><small>{lang === "ar" ? "اللون المتوسط" : "Average color"}</small><strong>{details.averageColor}</strong><i style={{ backgroundColor: details.averageColor }} /></article>
           <article><small>{lang === "ar" ? "السطوع" : "Brightness"}</small><strong>{details.brightness}/255</strong><span>{details.brightness >= 170 ? (lang === "ar" ? "فاتحة" : "Bright") : details.brightness <= 85 ? (lang === "ar" ? "داكنة" : "Dark") : (lang === "ar" ? "متوسطة" : "Balanced")}</span></article>
         </div>
       )}
-      {error && <p className="browser-tool-message">{error}</p>}
+      {message && <p className={styles.message} aria-live="polite">{message}</p>}
     </div>
   );
 }
