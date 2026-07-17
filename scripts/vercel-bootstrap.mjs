@@ -67,6 +67,24 @@ const desktopPath = join(root, "apps", "web", "components", "azez-desktop.tsx");
 if (existsSync(desktopPath)) {
   replaceRequired(
     desktopPath,
+    `import { WorkflowsWorkspace } from "@/components/workflows-workspace";`,
+    `import { WorkflowsWorkspace } from "@/components/workflows-workspace";\nimport { VisionWorkspace, VoiceWorkspace } from "@/components/browser-tools-workspace";`,
+    "desktop browser tools import",
+  );
+  replaceRequired(
+    desktopPath,
+    `      case "voice": return <BrowserCapability kind="voice" lang={lang} open={openWindow} />;\n      case "vision": return <BrowserCapability kind="vision" lang={lang} open={openWindow} />;`,
+    `      case "voice": return <VoiceWorkspace lang={lang} />;\n      case "vision": return <VisionWorkspace lang={lang} />;`,
+    "functional voice and vision workspaces",
+  );
+  replaceRequiredPattern(
+    desktopPath,
+    /\nfunction BrowserCapability\([\s\S]*?\n}\n\nexport function AzezDesktop/,
+    "\nexport function AzezDesktop",
+    "legacy browser capability placeholder",
+  );
+  replaceRequired(
+    desktopPath,
     "          uptimeSeconds: health?.uptimeSeconds,",
     "          ...(health?.uptimeSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),",
     "desktop optional uptime",
@@ -83,7 +101,7 @@ if (existsSync(desktopPath)) {
     "\n",
     "unused desktop Sparkline component",
   );
-  console.log("Applied optional desktop compatibility patches.");
+  console.log("Applied AZEZ Desktop functionality and compatibility patches.");
 } else {
   console.log("Desktop compatibility patches skipped: source does not include azez-desktop.tsx.");
 }
