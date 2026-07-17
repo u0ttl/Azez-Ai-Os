@@ -1,4 +1,4 @@
-name: Validate full Azez AI OS
+name: Validate and publish full Azez AI OS
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     branches: [ci/full-system-build]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -58,3 +58,23 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4000/v1
         run: pnpm build
+
+      - name: Publish extracted source branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/ci/full-system-build'
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_DIR="$PWD/.extract-ai-os/azez-ai-os"
+          TEMP_PUBLISH="$RUNNER_TEMP/azez-ai-os-publish"
+          rm -rf "$TEMP_PUBLISH"
+          mkdir -p "$TEMP_PUBLISH"
+          rsync -a --exclude='.env' --exclude='node_modules/' --exclude='.next/' "$SOURCE_DIR"/ "$TEMP_PUBLISH"/
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan release-full-system
+          git rm -rf .
+          rsync -a "$TEMP_PUBLISH"/ ./
+          git add -A
+          git commit -m 'Publish validated Azez AI OS source'
+          git push --force origin HEAD:release/full-system
