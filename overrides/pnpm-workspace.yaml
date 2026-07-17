@@ -20,3 +20,4 @@ onlyBuiltDependencies:
 overrides:
   postcss: 8.5.10
   '@hono/node-server': 1.19.13
+  '@fastify/static': 9.1.1
