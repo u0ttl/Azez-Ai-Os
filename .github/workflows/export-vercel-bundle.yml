@@ -5,19 +5,11 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - package.json
-      - scripts/**
-      - overrides/**
-      - Azez_AI_OS_v0.11.0_Signed.zip
-      - .github/workflows/export-vercel-bundle.yml
+      - "**"
   push:
     branches: [launch-hardening-0.12.0]
     paths:
-      - package.json
-      - scripts/**
-      - overrides/**
-      - Azez_AI_OS_v0.11.0_Signed.zip
-      - .github/workflows/export-vercel-bundle.yml
+      - "**"
 
 permissions:
   contents: read
@@ -29,7 +21,7 @@ jobs:
       - name: Checkout launch branch
         uses: actions/checkout@v4
 
-      - name: Verify deploy bundle
+      - name: Verify deploy source
         shell: bash
         run: |
           set -euo pipefail
@@ -38,16 +30,18 @@ jobs:
           test -f scripts/vercel-unified-build.mjs
           test -f Azez_AI_OS_v0.11.0_Signed.zip
           test -d overrides
+          test -f apps/web/components/azez-desktop.tsx
 
-      - name: Create deploy archive
+      - name: Create complete deploy archive
         shell: bash
         run: |
           set -euo pipefail
-          tar -czf azez-ai-os-vercel-bundle.tgz \
-            package.json \
-            scripts \
-            overrides \
-            Azez_AI_OS_v0.11.0_Signed.zip
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='azez-ai-os-vercel-bundle.tgz' \
+            -czf azez-ai-os-vercel-bundle.tgz .
 
       - name: Upload deploy archive
         uses: actions/upload-artifact@v4
