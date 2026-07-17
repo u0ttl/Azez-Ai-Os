@@ -37,12 +37,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          archive="$RUNNER_TEMP/azez-ai-os-vercel-bundle.tgz"
           tar \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.next' \
-            --exclude='azez-ai-os-vercel-bundle.tgz' \
-            -czf azez-ai-os-vercel-bundle.tgz .
+            -C "$GITHUB_WORKSPACE" \
+            -czf "$archive" .
+          mv "$archive" "$GITHUB_WORKSPACE/azez-ai-os-vercel-bundle.tgz"
+          test -s azez-ai-os-vercel-bundle.tgz
 
       - name: Upload deploy archive
         uses: actions/upload-artifact@v4
