@@ -12,13 +12,13 @@ const COPY = {
   ar: {
     brand: "AZEZ AI OS",
     start: "ابدأ من هنا",
-    registerTitle: "أنشئ مساحة عملك",
-    registerText: "سيتم إنشاء حسابك ومؤسستك الأولى بصلاحية المالك.",
+    registerTitle: "أنشئ حسابك",
+    registerText: "اختر حسابًا فرديًا أو مساحة لشركة وفريق عمل.",
     loginTitle: "مرحبًا بعودتك",
     loginText: "سجّل الدخول للوصول إلى مساحة عملك وخدمات النظام.",
-    registerAside: "نظام أعمالك، مدعوم بالذكاء.",
+    registerAside: "هويتك الرقمية في نظام ذكي واحد.",
     loginAside: "كل أعمالك في مساحة تشغيل واحدة.",
-    asideText: "واجهة عربية واضحة، بيانات معزولة، وصلاحيات آمنة منذ اليوم الأول.",
+    asideText: "واجهة تقنية ثلاثية الأبعاد، بيانات معزولة، وصلاحيات آمنة منذ اليوم الأول.",
     hasAccount: "لديك حساب؟",
     noAccount: "ليس لديك حساب؟",
     signIn: "تسجيل الدخول",
@@ -30,13 +30,13 @@ const COPY = {
   en: {
     brand: "AZEZ AI OS",
     start: "Start here",
-    registerTitle: "Create your workspace",
-    registerText: "Your account and first organization will be created with owner access.",
+    registerTitle: "Create your account",
+    registerText: "Choose an individual account or a workspace for a company and team.",
     loginTitle: "Welcome back",
     loginText: "Sign in to access your workspace and operating services.",
-    registerAside: "Your business operating system, powered by AI.",
+    registerAside: "Your digital identity in one intelligent system.",
     loginAside: "All your work in one operating environment.",
-    asideText: "Clear bilingual UX, isolated data, and secure permissions from day one.",
+    asideText: "A three-dimensional technology interface, isolated data, and secure permissions from day one.",
     hasAccount: "Already have an account?",
     noAccount: "Need an account?",
     signIn: "Sign in",
@@ -47,15 +47,24 @@ const COPY = {
   },
 } as const;
 
+function initialLanguage(): Lang {
+  if (typeof window === "undefined") return "ar";
+  const saved = window.localStorage.getItem("azez-language");
+  return saved === "ar" || saved === "en" ? saved : "ar";
+}
+
+function initialTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
+  const saved = window.localStorage.getItem("azez-theme");
+  if (saved === "dark" || saved === "light") return saved;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function AuthPageClient({ mode }: { mode: Mode }) {
-  const [lang, setLang] = useState<Lang>("ar");
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [lang, setLang] = useState<Lang>(initialLanguage);
+  const [theme, setTheme] = useState<Theme>(initialTheme);
 
   useEffect(() => {
-    const savedLang = window.localStorage.getItem("azez-language");
-    const savedTheme = window.localStorage.getItem("azez-theme");
-    if (savedLang === "ar" || savedLang === "en") setLang(savedLang);
-    if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
     document.body.dataset.page = "auth";
     return () => { delete document.body.dataset.page; };
   }, []);
@@ -97,7 +106,7 @@ export function AuthPageClient({ mode }: { mode: Mode }) {
               aria-label={copy.language}
               title={copy.language}
             >
-              <span aria-hidden="true">{lang === "ar" ? "EN" : "AR"}</span>
+              <span aria-hidden="true">{lang === "ar" ? "EN" : "ع"}</span>
             </button>
           </div>
         </header>
