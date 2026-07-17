@@ -9,7 +9,7 @@ export class CsrfService {
     return randomBytes(32).toString("base64url");
   }
 
-  verify(token: string | undefined): boolean {
+  verify(token: string | undefined): token is string {
     return typeof token === "string" && TOKEN_PATTERN.test(token);
   }
 
