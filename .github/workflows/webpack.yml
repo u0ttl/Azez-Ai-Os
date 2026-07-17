@@ -56,7 +56,20 @@ jobs:
           retention-days: 1
 
       - name: Audit production dependencies
-        run: npx --yes pnpm@11.7.0 audit --prod --audit-level=moderate
+        id: audit
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx --yes pnpm@11.7.0 audit --prod --audit-level=moderate 2>&1 | tee audit.log
+
+      - name: Upload security diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-preview-audit-log
+          path: audit.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Lint web application
         run: npx --yes pnpm@11.7.0 exec eslint app components lib --ignore-pattern 'app/api/v1/**' --max-warnings=0
@@ -69,3 +82,9 @@ jobs:
 
       - name: Run web unit tests
         run: npx --yes pnpm@11.7.0 exec vitest run lib/api-client.spec.ts lib/operations.spec.ts lib/product.spec.ts
+
+      - name: Enforce security gate
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "Production dependency audit failed. Review azez-preview-audit-log."
+          exit 1
