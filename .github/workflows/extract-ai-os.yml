@@ -1,20 +1,19 @@
-name: Extract and prepare Azez AI OS
+name: Validate full Azez AI OS
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
-    paths:
-      - 'Azez_AI_OS_v0.11.0_Signed.zip'
-      - '.github/workflows/extract-ai-os.yml'
+    branches: [ci/full-system-build]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  extract:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,50 +22,41 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf .extract-ai-os
+          mkdir -p .extract-ai-os
+          unzip -q Azez_AI_OS_v0.11.0_Signed.zip -d .extract-ai-os
+          test -f .extract-ai-os/azez-ai-os/package.json
+          test -d .extract-ai-os/azez-ai-os/apps/web
+          test -d .extract-ai-os/azez-ai-os/apps/api
 
-          ARCHIVE='Azez_AI_OS_v0.11.0_Signed.zip'
-          TEMP_DIR='.extract-ai-os'
-          test -f "$ARCHIVE"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: .extract-ai-os/azez-ai-os/pnpm-lock.yaml
 
-          rm -rf "$TEMP_DIR"
-          mkdir -p "$TEMP_DIR"
-          unzip -q "$ARCHIVE" -d "$TEMP_DIR"
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@11.7.0 --activate
 
-          SOURCE_DIR="$TEMP_DIR/azez-ai-os"
-          test -f "$SOURCE_DIR/package.json"
-          test -d "$SOURCE_DIR/apps"
+      - name: Install dependencies
+        working-directory: .extract-ai-os/azez-ai-os
+        run: pnpm install --frozen-lockfile
 
-          find . -mindepth 1 -maxdepth 1 \
-            ! -name '.git' \
-            ! -name '.github' \
-            ! -name "$TEMP_DIR" \
-            ! -name "$ARCHIVE" \
-            -exec rm -rf {} +
+      - name: Generate Prisma client
+        working-directory: .extract-ai-os/azez-ai-os
+        run: pnpm db:generate
 
-          rsync -a \
-            --exclude='.git/' \
-            --exclude='node_modules/' \
-            --exclude='.next/' \
-            --exclude='.env' \
-            "$SOURCE_DIR"/ ./
+      - name: Typecheck
+        working-directory: .extract-ai-os/azez-ai-os
+        run: pnpm typecheck
 
-          rm -rf "$TEMP_DIR"
-          rm -f "$ARCHIVE"
+      - name: Test
+        working-directory: .extract-ai-os/azez-ai-os
+        run: pnpm test
 
-      - name: Commit extracted project
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo 'No changes to commit'
-            exit 0
-          fi
-
-          git commit -m 'Deploy signed Azez AI OS source'
-          git push origin HEAD:main
-
-# trigger 2
+      - name: Build
+        working-directory: .extract-ai-os/azez-ai-os
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/v1
+        run: pnpm build
