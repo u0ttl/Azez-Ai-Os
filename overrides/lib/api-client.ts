@@ -1,7 +1,7 @@
 const configuredApiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 const apiBase = configuredApiBase ?? "/api/v1";
 const apiConfigured = true;
-const CSRF_COOKIE = "azez_csrf";
+const CSRF_COOKIES = ["__Host-azez_csrf", "azez_csrf"] as const;
 let csrfToken: string | null = null;
 
 function readCookie(name: string): string | null {
@@ -19,8 +19,16 @@ function readCookie(name: string): string | null {
   return null;
 }
 
+function readCsrfCookie(): string | null {
+  for (const name of CSRF_COOKIES) {
+    const token = readCookie(name);
+    if (token) return token;
+  }
+  return null;
+}
+
 async function getCsrfToken(forceRefresh = false): Promise<string> {
-  const cookieToken = readCookie(CSRF_COOKIE);
+  const cookieToken = readCsrfCookie();
   if (!forceRefresh && csrfToken && cookieToken === csrfToken) return csrfToken;
 
   csrfToken = null;
