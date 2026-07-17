@@ -91,6 +91,7 @@ rmSync(apiTarget, { recursive: true, force: true });
 overlay(apiSource, apiTarget);
 rmSync(apiSource, { recursive: true, force: true });
 overlay(overrides, root);
+execSync("node scripts/patch-auth-workspace.mjs", { stdio: "inherit", env: process.env });
 
 const actualApi = findPackage(root, "@azez/api");
 if (!actualApi) throw new Error("Unable to locate @azez/api package");
