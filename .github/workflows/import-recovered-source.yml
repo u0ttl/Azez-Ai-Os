@@ -1,0 +1,56 @@
+name: Import recovered AZEZ AI OS source
+
+on:
+  push:
+    branches: [recovered-0.12.0]
+    paths:
+      - azez-v0.12.0-recovered.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout recovered branch
+        uses: actions/checkout@v4
+        with:
+          ref: recovered-0.12.0
+
+      - name: Extract recovered source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE='azez-v0.12.0-recovered.zip'
+          TEMP='.recovered-import'
+          test -f "$ARCHIVE"
+          rm -rf "$TEMP"
+          mkdir -p "$TEMP"
+          unzip -q "$ARCHIVE" -d "$TEMP"
+          test -f "$TEMP/package.json"
+          test -f "$TEMP/components/azez-desktop.tsx"
+          test -f "$TEMP/packages/api/src/application.ts"
+          test -f "$TEMP/packages/database/prisma/schema.prisma"
+
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.git' \
+            ! -name '.github' \
+            ! -name "$TEMP" \
+            ! -name "$ARCHIVE" \
+            -exec rm -rf {} +
+
+          rsync -a "$TEMP"/ ./
+          rm -rf "$TEMP"
+          rm -f "$ARCHIVE"
+
+      - name: Commit recovered source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Restore complete AZEZ AI OS 0.12.0 production source'
+          git push origin HEAD:recovered-0.12.0
