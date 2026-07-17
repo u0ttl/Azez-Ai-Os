@@ -33,24 +33,29 @@ if (existsSync(overrides)) {
 }
 
 const desktopPath = join(root, "apps", "web", "components", "azez-desktop.tsx");
-replaceRequired(
-  desktopPath,
-  "          uptimeSeconds: health?.uptimeSeconds,",
-  "          ...(health?.uptSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),".replace("uptSeconds", "uptimeSeconds"),
-  "desktop optional uptime",
-);
-replaceRequired(
-  desktopPath,
-  "{[[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]].map(([name,status]) =>",
-  "{([[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]] as const).map(([name,status]) =>",
-  "desktop database status tuples",
-);
-replaceRequiredPattern(
-  desktopPath,
-  /\nfunction Sparkline\([\s\S]*?\n}\n\n/,
-  "\n",
-  "unused desktop Sparkline component",
-);
+if (existsSync(desktopPath)) {
+  replaceRequired(
+    desktopPath,
+    "          uptimeSeconds: health?.uptimeSeconds,",
+    "          ...(health?.uptimeSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),",
+    "desktop optional uptime",
+  );
+  replaceRequired(
+    desktopPath,
+    "{[[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]].map(([name,status]) =>",
+    "{([[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]] as const).map(([name,status]) =>",
+    "desktop database status tuples",
+  );
+  replaceRequiredPattern(
+    desktopPath,
+    /\nfunction Sparkline\([\s\S]*?\n}\n\n/,
+    "\n",
+    "unused desktop Sparkline component",
+  );
+  console.log("Applied optional desktop compatibility patches.");
+} else {
+  console.log("Desktop compatibility patches skipped: source does not include azez-desktop.tsx.");
+}
 
 rmSync(temp, { recursive: true, force: true });
 console.log("AZEZ AI OS 0.12.0 source and launch hardening overrides prepared for Vercel Preview.");
