@@ -63,7 +63,7 @@ if (existsSync(overrides)) {
   for (const entry of readdirSync(overrides)) cpSync(join(overrides, entry), join(root, entry), { recursive: true, force: true, dereference: true });
 }
 
-const desktopPath = join(root, "apps", "web", "components", "azez-desktop.tsx");
+const desktopPath = join(root, "components", "azez-desktop.tsx");
 if (existsSync(desktopPath)) {
   replaceRequired(
     desktopPath,
@@ -85,23 +85,47 @@ if (existsSync(desktopPath)) {
   );
   replaceRequired(
     desktopPath,
-    "          uptimeSeconds: health?.uptimeSeconds,",
-    "          ...(health?.uptimeSeconds !== undefined ? { uptimeSeconds: health.uptimeSeconds } : {}),",
-    "desktop optional uptime",
+    `import { AIWorkspace } from "@/components/ai-workspace";`,
+    `import { AIWorkspace } from "@/components/ai-workspace";\nimport { AccountWorkspace } from "@/components/auth-workspace";`,
+    "desktop account workspace import",
   );
   replaceRequired(
     desktopPath,
-    "{[[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]].map(([name,status]) =>",
-    "{([[\"PostgreSQL\",live.database],[\"Redis\",live.redis],[\"Malware Scanner\",live.scanner],[\"API Bridge\",live.api]] as const).map(([name,status]) =>",
-    "desktop database status tuples",
+    `  | "home"\n  | "ai"`,
+    `  | "home"\n  | "account"\n  | "ai"`,
+    "desktop account window id",
   );
-  replaceRequiredPattern(
+  replaceRequired(
     desktopPath,
-    /\nfunction Sparkline\([\s\S]*?\n}\n\n/,
-    "\n",
-    "unused desktop Sparkline component",
+    `const EXTRA_ITEMS: NavItem[] = [\n  { id: "notifications"`,
+    `const EXTRA_ITEMS: NavItem[] = [\n  { id: "account", en: "Account", ar: "الحساب", icon: "AZ", subtitleEn: "Sign in or create a workspace", subtitleAr: "تسجيل الدخول أو إنشاء مساحة عمل" },\n  { id: "notifications"`,
+    "desktop account navigation item",
   );
-  console.log("Applied AZEZ Desktop functionality and compatibility patches.");
+  replaceRequired(
+    desktopPath,
+    `        <button type="button" onClick={() => { window.location.href = signedIn ? "/security" : "/login"; }}>{signedIn ? (lang === "ar" ? "إدارة الأمان" : "Security") : (lang === "ar" ? "تسجيل الدخول" : "Sign in")}</button>`,
+    `        <button type="button" onClick={() => open(signedIn ? "security" : "account")}>{signedIn ? (lang === "ar" ? "إدارة الأمان" : "Security") : (lang === "ar" ? "تسجيل أو إنشاء حساب" : "Sign in or create account")}</button>`,
+    "desktop inline account action",
+  );
+  replaceRequired(
+    desktopPath,
+    `  const [lang, setLang] = useState<Lang>("en");`,
+    `  const [lang, setLang] = useState<Lang>("ar");`,
+    "desktop Arabic default",
+  );
+  replaceRequired(
+    desktopPath,
+    `      case "home": return <HomeWorkspace snapshot={snapshot} lang={lang} open={openWindow} refresh={() => void refresh()} />;\n      case "ai": return <AIWorkspace />;`,
+    `      case "home": return <HomeWorkspace snapshot={snapshot} lang={lang} open={openWindow} refresh={() => void refresh()} />;\n      case "account": return <AccountWorkspace lang={lang} identity={snapshot.identity} onSessionChanged={refresh} openSecurity={() => openWindow("security")} />;\n      case "ai": return <AIWorkspace />;`,
+    "desktop account renderer",
+  );
+  replaceRequired(
+    desktopPath,
+    `        <button className="owner-card" type="button" onClick={() => openWindow(snapshot.identity ? "settings" : "security")}>`,
+    `        <button className="owner-card" type="button" onClick={() => openWindow("account")}>`,
+    "desktop owner account launcher",
+  );
+  console.log("Applied AZEZ Desktop functionality, inline account access, and compatibility patches.");
 } else {
   console.log("Desktop compatibility patches skipped: source does not include azez-desktop.tsx.");
 }
