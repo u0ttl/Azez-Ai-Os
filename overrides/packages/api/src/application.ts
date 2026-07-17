@@ -6,6 +6,7 @@ import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { createHash } from "node:crypto";
 import { AppModule } from "./app.module.js";
 import { MetricsService } from "./metrics/metrics.service.js";
 import { SecurityRateLimiter } from "./security/rate-limiter.service.js";
@@ -52,12 +53,39 @@ function swaggerEnabled(): boolean {
   return process.env.NODE_ENV !== "production" && process.env.SWAGGER_ENABLED !== "false";
 }
 
+function ensureProductionSessionSecret(): void {
+  if (process.env.NODE_ENV !== "production") return;
+
+  const configured = process.env.SESSION_SECRET?.trim();
+  if (configured && configured.length >= 32) return;
+
+  const secretMaterial = [
+    process.env.AUTH_SECRET,
+    process.env.NEXTAUTH_SECRET,
+    process.env.CRON_SECRET,
+    process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.POSTGRES_URL,
+  ]
+    .map((value) => value?.trim())
+    .find((value): value is string => Boolean(value && value.length >= 16));
+
+  if (!secretMaterial) {
+    throw new Error(
+      "SESSION_SECRET must contain at least 32 characters in production, or a protected database/auth secret must be configured",
+    );
+  }
+
+  process.env.SESSION_SECRET = createHash("sha256")
+    .update(`azez-ai-os-session-v1:${secretMaterial}`)
+    .digest("base64url");
+}
+
 export async function createApiApplication(
   options: ApiApplicationOptions = {},
 ): Promise<NestFastifyApplication> {
-  if (process.env.NODE_ENV === "production" && (process.env.SESSION_SECRET?.length ?? 0) < 32) {
-    throw new Error("SESSION_SECRET must contain at least 32 characters in production");
-  }
+  ensureProductionSessionSecret();
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
