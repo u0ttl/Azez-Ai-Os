@@ -106,7 +106,7 @@ if (existsSync(desktopPath)) {
   console.log("Desktop compatibility patches skipped: source does not include azez-desktop.tsx.");
 }
 
-const browserToolsPath = join(root, "components", "browser-tools-workspace.tsx");
+const browserToolsPath = join(overrides, "components", "browser-tools-workspace.tsx");
 if (existsSync(browserToolsPath)) {
   replaceRequired(
     browserToolsPath,
