@@ -6,6 +6,10 @@ on:
     branches: [launch-hardening-0.12.0]
     paths:
       - ".github/workflows/runtime-capabilities.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/runtime-capabilities.yml"
 
 permissions:
   contents: read
