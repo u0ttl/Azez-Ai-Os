@@ -1,0 +1,50 @@
+name: Export Azez AI OS Vercel Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [launch-hardening-0.12.0]
+    paths:
+      - package.json
+      - scripts/**
+      - overrides/**
+      - Azez_AI_OS_v0.11.0_Signed.zip
+      - .github/workflows/export-vercel-bundle.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout launch branch
+        uses: actions/checkout@v4
+
+      - name: Verify deploy bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f package.json
+          test -f scripts/vercel-bootstrap.mjs
+          test -f scripts/vercel-unified-build.mjs
+          test -f Azez_AI_OS_v0.11.0_Signed.zip
+          test -d overrides
+
+      - name: Create deploy archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf azez-ai-os-vercel-bundle.tgz \
+            package.json \
+            scripts \
+            overrides \
+            Azez_AI_OS_v0.11.0_Signed.zip
+
+      - name: Upload deploy archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-ai-os-vercel-bundle
+          path: azez-ai-os-vercel-bundle.tgz
+          if-no-files-found: error
+          retention-days: 7
