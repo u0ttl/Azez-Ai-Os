@@ -72,7 +72,18 @@ jobs:
           retention-days: 1
 
       - name: Lint web application
-        run: npx --yes pnpm@11.7.0 exec eslint app components lib --ignore-pattern 'app/api/v1/**' --max-warnings=0
+        run: |
+          set -o pipefail
+          npx --yes pnpm@11.7.0 exec eslint app components lib --ignore-pattern 'app/api/v1/**' --max-warnings=0 2>&1 | tee lint-web.log
+
+      - name: Upload web lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-preview-web-lint-log
+          path: lint-web.log
+          if-no-files-found: warn
+          retention-days: 1
 
       - name: Lint API application
         run: npx --yes pnpm@11.7.0 --filter @azez/api lint
