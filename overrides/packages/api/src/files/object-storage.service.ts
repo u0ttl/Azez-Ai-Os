@@ -97,7 +97,7 @@ export class ObjectStorageService {
   }
 
   private ensureFallbackTable(): Promise<void> {
-    this.fallbackReady ??= this.database.client.$executeRawUnsafe(`
+    const ready = this.fallbackReady ??= this.database.client.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "file_objects" (
         "storage_key" VARCHAR(500) PRIMARY KEY,
         "content" BYTEA NOT NULL,
@@ -106,6 +106,6 @@ export class ObjectStorageService {
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `).then(() => undefined);
-    return this.fallbackReady;
+    return ready;
   }
 }
