@@ -106,5 +106,28 @@ if (existsSync(desktopPath)) {
   console.log("Desktop compatibility patches skipped: source does not include azez-desktop.tsx.");
 }
 
+const browserToolsPath = join(root, "components", "browser-tools-workspace.tsx");
+if (existsSync(browserToolsPath)) {
+  replaceRequired(
+    browserToolsPath,
+    `import { useEffect, useRef, useState } from "react";`,
+    `import { useEffect, useRef, useState, useSyncExternalStore } from "react";`,
+    "browser tools external-store import",
+  );
+  replaceRequired(
+    browserToolsPath,
+    `  const [supported, setSupported] = useState(false);`,
+    `  const supported = useSyncExternalStore(\n    () => () => undefined,\n    () => Boolean(recognitionConstructor()),\n    () => false,\n  );`,
+    "browser voice support snapshot",
+  );
+  replaceRequired(
+    browserToolsPath,
+    `  useEffect(() => {\n    setSupported(Boolean(recognitionConstructor()));\n    return () => recognizer.current?.abort();\n  }, []);`,
+    `  useEffect(() => () => recognizer.current?.abort(), []);`,
+    "browser voice cleanup effect",
+  );
+  console.log("Applied SSR-safe browser capability detection.");
+}
+
 rmSync(temp, { recursive: true, force: true });
 console.log("AZEZ AI OS 0.12.0 source and launch hardening overrides prepared for Vercel Preview.");
