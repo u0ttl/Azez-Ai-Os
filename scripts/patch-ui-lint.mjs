@@ -1,4 +1,5 @@
 import "./patch-mobile-ux.mjs";
+import "./finalize-interface-quality.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,3 +39,5 @@ const loadingEffect = `
 source = source.replace(loadingEffect, "\n");
 writeFileSync(desktopPath, source);
 console.log("Applied lint-safe appearance state initialization.");
+
+await import("./validate-interface-quality.mjs");
