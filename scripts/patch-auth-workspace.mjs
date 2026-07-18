@@ -29,16 +29,31 @@ if (!workspace.includes(mobilePerformanceRule)) {
 }
 writeFileSync(workspacePath, workspace);
 
-const performanceCssPath = join(root, "app", "auth-mobile-performance.css");
 const globalsPath = join(root, "app", "globals.css");
-const marker = "/* AZEZ_AUTH_MOBILE_PERFORMANCE */";
-if (existsSync(performanceCssPath) && existsSync(globalsPath)) {
-  const globals = readFileSync(globalsPath, "utf8");
-  if (!globals.includes(marker)) {
-    const performanceCss = readFileSync(performanceCssPath, "utf8");
-    writeFileSync(globalsPath, `${globals}\n${marker}\n${performanceCss}\n`);
-    console.log("Appended mobile authentication performance CSS.");
-  } else {
-    console.log("Mobile authentication performance CSS already appended.");
+const styleLayers = [
+  {
+    path: join(root, "app", "auth-mobile-performance.css"),
+    marker: "/* AZEZ_AUTH_MOBILE_PERFORMANCE */",
+    label: "mobile authentication performance CSS",
+  },
+  {
+    path: join(root, "app", "interface-hardening.css"),
+    marker: "/* AZEZ_INTERFACE_HARDENING */",
+    label: "responsive menu and card hardening CSS",
+  },
+  {
+    path: join(root, "app", "interface-order-fix.css"),
+    marker: "/* AZEZ_INTERFACE_ORDER_FIX */",
+    label: "responsive positioning correction CSS",
+  },
+];
+
+if (existsSync(globalsPath)) {
+  let globals = readFileSync(globalsPath, "utf8");
+  for (const layer of styleLayers) {
+    if (!existsSync(layer.path) || globals.includes(layer.marker)) continue;
+    globals = `${globals}\n${layer.marker}\n${readFileSync(layer.path, "utf8")}\n`;
+    console.log(`Appended ${layer.label}.`);
   }
+  writeFileSync(globalsPath, globals);
 }
