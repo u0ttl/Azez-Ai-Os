@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -63,6 +63,13 @@ if (existsSync(overrides)) {
   for (const entry of readdirSync(overrides)) cpSync(join(overrides, entry), join(root, entry), { recursive: true, force: true, dereference: true });
 }
 
+const interfaceHardeningPath = join(overrides, "app", "interface-hardening.css");
+const globalStylesPath = join(root, "app", "globals.css");
+if (existsSync(interfaceHardeningPath) && existsSync(globalStylesPath)) {
+  appendFileSync(globalStylesPath, `\n\n${readFileSync(interfaceHardeningPath, "utf8")}\n`);
+  console.log("Applied responsive menu, card, contrast, and overlap hardening.");
+}
+
 const desktopPath = join(root, "components", "azez-desktop.tsx");
 if (existsSync(desktopPath)) {
   replaceRequired(
@@ -112,6 +119,12 @@ if (existsSync(desktopPath)) {
     `  const [lang, setLang] = useState<Lang>("en");`,
     `  const [lang, setLang] = useState<Lang>("ar");`,
     "desktop Arabic default",
+  );
+  replaceRequired(
+    desktopPath,
+    `<button className="language-toggle" type="button" onClick={() => setLang((current) => current === "ar" ? "en" : "ar")}><span>{lang === "ar" ? "English" : "العربية"}</span></button>`,
+    `<button className="language-toggle" type="button" onClick={() => setLang((current) => current === "ar" ? "en" : "ar")} aria-label={lang === "ar" ? "Switch to English" : "التبديل إلى العربية"} title={lang === "ar" ? "Switch to English" : "التبديل إلى العربية"}><span>{lang === "ar" ? "EN" : "ع"}</span></button>`,
+    "desktop language badge",
   );
   replaceRequired(
     desktopPath,
