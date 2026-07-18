@@ -37,6 +37,7 @@ jobs:
           test -f Azez_AI_OS_v0.11.0_Signed.zip
           test -f scripts/vercel-bootstrap.mjs
           test -f scripts/vercel-unified-build.mjs
+          test -f scripts/validate-interface-layout.mjs
 
       - name: Build AZEZ AI OS 0.12.0
         env:
@@ -45,6 +46,9 @@ jobs:
         run: |
           set -o pipefail
           npm run build 2>&1 | tee build.log
+
+      - name: Validate desktop and phone interface
+        run: node scripts/validate-interface-layout.mjs
 
       - name: Upload build diagnostics
         if: always()
