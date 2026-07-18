@@ -1,0 +1,172 @@
+/* AZEZ_MOBILE_UX_POLISH
+   Real mobile composition: activates by viewport OR coarse touch input so Samsung Internet
+   desktop-view/zoom cannot squeeze the full desktop canvas into a phone. */
+:root{
+  --az-font-ar:"Noto Sans Arabic","IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --az-font-en:Inter,"Segoe UI",Roboto,Arial,sans-serif;
+  --az-mobile-bg:#030b13;
+  --az-mobile-surface:#071a27;
+  --az-mobile-surface-2:#0a2232;
+  --az-mobile-border:rgba(104,203,246,.22);
+  --az-mobile-text:#f1f8fc;
+  --az-mobile-muted:#9db4c3;
+}
+html{font-synthesis:none;text-rendering:optimizeLegibility;-webkit-text-size-adjust:100%}
+html[lang="ar"] body,.azez-desktop.arabic,[dir="rtl"]{font-family:var(--az-font-ar)}
+html[lang="en"] body,.azez-desktop.english,[dir="ltr"]{font-family:var(--az-font-en)}
+button,input,textarea,select{font-family:inherit}
+.azez-desktop button,.azez-desktop nav,.azez-desktop .window-toolbar{-webkit-user-select:none;user-select:none}
+.azez-desktop input,.azez-desktop textarea{-webkit-user-select:text;user-select:text}
+.desktop-module-host{container-type:inline-size;container-name:module-host;min-width:0}
+.system-window,.system-window.maximized{max-width:100vw;max-height:100dvh;overflow:hidden}
+.desktop-module-host,.desktop-module-host>*{min-width:0}
+
+/* Standalone auth: remove browser-default controls and preserve readable contrast. */
+.auth-page .auth-preference{
+  appearance:none!important;-webkit-appearance:none!important;
+  background:var(--auth-surface)!important;color:var(--auth-ink)!important;
+  border:1px solid var(--auth-border)!important;border-radius:12px!important;
+  box-shadow:0 8px 22px color-mix(in srgb,#000 18%,transparent)!important;
+}
+.auth-page .auth-preference:hover,.auth-page .auth-preference:focus-visible{
+  background:color-mix(in srgb,var(--auth-surface) 82%,var(--auth-accent-2))!important;
+  border-color:var(--auth-focus)!important;
+}
+.auth-page .auth-preferences{padding:4px;border:1px solid color-mix(in srgb,var(--auth-border) 78%,transparent);border-radius:15px;background:color-mix(in srgb,var(--auth-card) 84%,transparent)}
+.auth-page .auth-copy h1{letter-spacing:-.025em}
+html[lang="ar"] .auth-page .auth-copy h1{letter-spacing:0}
+.auth-page .auth-form input{appearance:none;-webkit-appearance:none}
+
+@media (max-width:900px),(pointer:coarse),(any-pointer:coarse){
+  body[data-page="auth"]{overflow:auto!important;background:#03101a!important}
+  .auth-page{display:block!important;min-height:100dvh!important;background:linear-gradient(180deg,#061824,#020a11)!important}
+  .auth-card{width:min(100%,640px)!important;min-height:100dvh!important;margin-inline:auto!important;padding:max(20px,env(safe-area-inset-top)) clamp(18px,5vw,32px) max(36px,env(safe-area-inset-bottom))!important;justify-content:flex-start!important;border:0!important}
+  .auth-art{display:none!important}
+  .auth-toolbar{margin-bottom:clamp(32px,7vh,64px)!important;gap:12px!important}
+  .auth-brand strong{font-size:clamp(15px,4vw,18px)!important;white-space:nowrap}
+  .auth-copy h1{font-size:clamp(31px,8vw,42px)!important;line-height:1.22!important;margin-block:8px 12px!important}
+  .auth-copy p{font-size:clamp(14px,3.8vw,16px)!important;line-height:1.75!important;margin-bottom:24px!important;color:color-mix(in srgb,var(--auth-ink) 68%,transparent)!important}
+  .auth-form{gap:15px!important}
+  .auth-form label{font-size:13px!important;font-weight:650!important}
+  .auth-form input{min-height:52px!important;font-size:16px!important;border-radius:14px!important}
+  .auth-submit{min-height:54px!important;border-radius:14px!important;font-size:15px!important;font-weight:750!important}
+  .auth-switch{display:block!important;margin-top:24px!important;line-height:1.8!important;font-size:13px!important}
+}
+
+@media (max-width:760px),(pointer:coarse),(any-pointer:coarse){
+  :root{--az-left:0px;--az-right:0px;--az-bottom:0px}
+  html,body{width:100%!important;min-width:0!important;overflow-x:hidden!important;background:var(--az-mobile-bg)!important}
+  .azez-desktop{
+    display:flex!important;flex-direction:column!important;
+    width:100%!important;min-width:0!important;max-width:100%!important;
+    min-height:100dvh!important;height:auto!important;overflow:visible!important;
+    padding:calc(70px + env(safe-area-inset-top)) 10px calc(92px + env(safe-area-inset-bottom))!important;
+    gap:12px!important;background:radial-gradient(circle at 50% 0,rgba(21,116,164,.17),transparent 42%),var(--az-mobile-bg)!important;
+    color:var(--az-mobile-text)!important;
+  }
+  .azez-desktop>.desktop-noise{display:none!important}
+
+  /* Compact mobile app bar. */
+  .azez-desktop>.top-control{
+    position:fixed!important;z-index:180!important;inset:0 0 auto!important;
+    width:100%!important;min-width:0!important;height:calc(62px + env(safe-area-inset-top))!important;
+    padding:calc(8px + env(safe-area-inset-top)) 10px 8px!important;
+    border:0!important;border-bottom:1px solid var(--az-mobile-border)!important;border-radius:0 0 18px 18px!important;
+    display:grid!important;grid-template-columns:42px minmax(0,1fr) 42px 42px!important;gap:7px!important;
+    background:rgba(5,19,29,.96)!important;backdrop-filter:blur(18px)!important;box-shadow:0 10px 34px rgba(0,0,0,.32)!important;
+  }
+  .mobile-brand{display:grid!important;place-items:center!important;width:42px!important;height:42px!important}
+  .mobile-brand .azez-mark{width:34px!important;height:34px!important;border-radius:11px!important;font-size:17px!important}
+  .top-control .search-control{height:42px!important;width:100%!important;min-width:0!important;padding-inline:12px!important;border-radius:13px!important;background:rgba(9,38,55,.78)!important;border-color:var(--az-mobile-border)!important}
+  .top-control .search-control kbd{display:none!important}
+  .top-control .search-control>span:nth-child(2){font-size:12px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .top-control .clock-block,.top-control .top-round:not(.appearance-trigger),.top-control .top-round.pulse{display:none!important}
+  .top-control .appearance-trigger,.top-control .language-toggle{display:grid!important;place-items:center!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:13px!important}
+
+  /* Clean hero, not a scaled desktop dashboard. */
+  .azez-desktop>.scene-shell{
+    position:relative!important;inset:auto!important;order:1!important;
+    width:100%!important;height:390px!important;min-height:390px!important;
+    border:1px solid var(--az-mobile-border)!important;border-radius:22px!important;overflow:hidden!important;
+    background:linear-gradient(160deg,rgba(8,35,51,.96),rgba(2,11,18,.98))!important;
+    box-shadow:0 18px 50px rgba(0,0,0,.3)!important;filter:none!important;
+  }
+  .scene-shell .floating-stack{display:none!important}
+  .scene-shell .core-copy{top:43%!important;width:min(86vw,330px)!important;transform:translate(-50%,-50%)!important;text-align:center!important}
+  .scene-shell .core-copy .azez-mark{width:72px!important;height:72px!important;border-radius:21px!important;font-size:31px!important}
+  .scene-shell .core-copy h1{font-size:clamp(25px,7.5vw,32px)!important;line-height:1.18!important;font-weight:780!important;letter-spacing:.01em!important}
+  .scene-shell .core-copy p{font-size:13px!important;line-height:1.6!important;margin-top:7px!important;color:var(--az-mobile-muted)!important}
+  .scene-shell .core-copy small{font-size:10px!important;margin-top:8px!important}
+  .scene-shell .holo-core{width:190px!important;height:190px!important;top:44%!important;opacity:.7!important}
+  .scene-shell .center-dock{bottom:12px!important;width:calc(100% - 24px)!important;max-width:430px!important;height:58px!important;padding:7px!important;gap:6px!important;overflow-x:auto!important;justify-content:flex-start!important;border-radius:16px!important;scrollbar-width:none!important;background:rgba(4,19,29,.86)!important}
+  .scene-shell .center-dock::-webkit-scrollbar{display:none!important}
+  .scene-shell .center-dock button{flex:0 0 42px!important;width:42px!important;height:42px!important;min-height:42px!important;border-radius:11px!important}
+
+  /* Main tools become readable cards below the hero. */
+  .azez-desktop>.right-console{
+    position:relative!important;inset:auto!important;order:2!important;display:block!important;
+    width:100%!important;height:auto!important;min-height:0!important;padding:17px 13px!important;
+    border:1px solid var(--az-mobile-border)!important;border-radius:22px!important;overflow:visible!important;
+    background:linear-gradient(155deg,rgba(9,31,45,.98),rgba(4,17,27,.98))!important;
+  }
+  .right-heading{padding:2px 4px 14px!important;min-height:0!important}
+  .right-heading h2{font-size:22px!important;line-height:1.2!important;font-weight:760!important}
+  .right-heading span{font-size:11px!important;color:var(--az-mobile-muted)!important}
+  .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .feature-grid button{min-height:108px!important;padding:14px!important;border-radius:16px!important;align-content:start!important;background:linear-gradient(145deg,rgba(13,48,68,.82),rgba(6,26,39,.9))!important;border-color:var(--az-mobile-border)!important}
+  .feature-grid button i{width:31px!important;height:31px!important;border-radius:10px!important}
+  .feature-grid button strong{font-size:13px!important;line-height:1.35!important;font-weight:720!important}
+  .feature-grid button small{font-size:10.5px!important;line-height:1.6!important;color:var(--az-mobile-muted)!important}
+  .tool-group{margin-top:17px!important;padding:13px 10px!important;border-radius:16px!important;background:rgba(4,20,31,.65)!important}
+  .tool-group h3{font-size:13px!important;margin-bottom:10px!important}
+  .tool-group>div{gap:8px!important;overflow-x:auto!important;padding-bottom:2px!important;scrollbar-width:none!important}
+  .tool-group>div::-webkit-scrollbar{display:none!important}
+  .icon-action{min-width:60px!important;min-height:64px!important;border-radius:14px!important}
+  .icon-action small{font-size:9.5px!important}
+
+  /* Remove desktop-only telemetry from the phone home screen. */
+  .azez-desktop>.bottom-console,.azez-desktop>.left-status-panel,.azez-desktop>.command-orb{display:none!important}
+
+  /* Fixed, scrollable mobile navigation. */
+  .azez-desktop>.left-sidebar{
+    position:fixed!important;z-index:190!important;inset:auto 8px max(8px,env(safe-area-inset-bottom))!important;
+    width:auto!important;height:72px!important;padding:6px!important;border:1px solid var(--az-mobile-border)!important;
+    border-radius:20px!important;overflow:hidden!important;background:rgba(5,20,31,.96)!important;
+    backdrop-filter:blur(18px)!important;box-shadow:0 14px 42px rgba(0,0,0,.42)!important;
+  }
+  .left-sidebar .brand-lockup,.left-sidebar .owner-card{display:none!important}
+  .left-sidebar nav{display:flex!important;flex-direction:row!important;height:60px!important;gap:6px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:0!important;scrollbar-width:none!important;scroll-snap-type:x proximity!important}
+  .left-sidebar nav::-webkit-scrollbar{display:none!important}
+  .nav-button{flex:0 0 72px!important;width:72px!important;min-width:72px!important;height:60px!important;min-height:60px!important;padding:6px 4px!important;gap:3px!important;flex-direction:column!important;justify-content:center!important;border-radius:14px!important;scroll-snap-align:center!important}
+  .nav-button .nav-glyph{width:27px!important;height:27px!important;font-size:11px!important}
+  .nav-button span{display:block!important;font-size:10px!important;line-height:1.2!important;white-space:nowrap!important;max-width:64px!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:center!important}
+
+  /* All app windows become native-feeling full-screen sheets. */
+  .azez-desktop>.system-window,.azez-desktop>.system-window.maximized{
+    position:fixed!important;z-index:240!important;inset:0!important;width:100vw!important;height:100dvh!important;
+    min-width:0!important;min-height:0!important;max-width:100vw!important;max-height:100dvh!important;
+    border-radius:0!important;transform:none!important;background:#04121d!important;
+  }
+  .system-window .window-toolbar{height:60px!important;min-height:60px!important;padding-inline:10px!important;flex:none!important;background:rgba(6,24,36,.98)!important}
+  .system-window .window-identity{min-width:0!important;gap:8px!important}
+  .system-window .window-identity>div{min-width:0!important}
+  .system-window .window-identity strong{font-size:13px!important}
+  .system-window .window-identity small{display:block!important;max-width:44vw!important;font-size:9.5px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .system-window .window-controls button{width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;padding:0!important}
+  .system-window .window-controls button:nth-child(2){display:none!important}
+  .system-window .desktop-module-host{height:calc(100dvh - 60px)!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important}
+  .desktop-module-host .module-content,.desktop-module-host .security-page{padding:16px!important}
+  .desktop-module-host .module-header h1{font-size:clamp(24px,7vw,31px)!important}
+  .desktop-module-host .module-header p{font-size:12.5px!important;line-height:1.7!important}
+  .desktop-module-host .panel{padding:16px!important;border-radius:16px!important}
+  .desktop-module-host input,.desktop-module-host textarea,.desktop-module-host select{font-size:16px!important;min-height:48px!important}
+
+  /* Command and appearance panels remain inside the visible phone area. */
+  .azez-desktop>.command-palette,.appearance-panel{position:fixed!important;inset:auto 10px calc(88px + env(safe-area-inset-bottom))!important;width:auto!important;max-height:calc(100dvh - 172px)!important;border-radius:20px!important;overflow:auto!important}
+}
+
+@media (max-width:390px){
+  .feature-grid{grid-template-columns:1fr!important}
+  .feature-grid button{min-height:90px!important}
+  .auth-card{padding-inline:16px!important}
+}
