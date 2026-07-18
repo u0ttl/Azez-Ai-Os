@@ -111,6 +111,10 @@ execSync("node scripts/patch-ui-polish.mjs", {
   stdio: "inherit",
   env: process.env,
 });
+execSync("node scripts/patch-ui-lint.mjs", {
+  stdio: "inherit",
+  env: process.env,
+});
 
 const actualApi = findPackage(root, "@azez/api");
 if (!actualApi) throw new Error("Unable to locate @azez/api package");
