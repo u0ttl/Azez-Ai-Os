@@ -1,0 +1,82 @@
+name: Deploy AZEZ Preview
+
+on:
+  push:
+    branches:
+      - launch-hardening-0.12.0
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azez-vercel-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview only
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_5kgZJGeh9LdWR2g6lCyVmXzO
+      VERCEL_PROJECT_ID: prj_c8W0NaokLkuTi1cVapuuDotOUt9Q
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Verify Vercel credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "::error::Repository secret VERCEL_TOKEN is missing."
+            exit 1
+          fi
+
+      - name: Link exact Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          cat > .vercel/project.json <<'JSON'
+          {
+            "orgId": "team_5kgZJGeh9LdWR2g6lCyVmXzO",
+            "projectId": "prj_c8W0NaokLkuTi1cVapuuDotOUt9Q",
+            "projectName": "azez-ai-os"
+          }
+          JSON
+
+      - name: Deploy Preview
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(npx --yes vercel@latest deploy --yes --token "$VERCEL_TOKEN")"
+          printf '%s\n' "$url" | tee preview-url.txt
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test liveness
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ steps.deploy.outputs.url }}"
+          npx --yes vercel@latest curl "$url/api/v1/health" --token "$VERCEL_TOKEN" -- --fail --silent --show-error | tee health.json
+
+      - name: Upload Preview result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-vercel-preview-result
+          path: |
+            preview-url.txt
+            health.json
+          if-no-files-found: warn
+          retention-days: 7
