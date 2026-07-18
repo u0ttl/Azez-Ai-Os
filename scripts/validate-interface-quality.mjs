@@ -13,6 +13,7 @@ const layout = read("app/layout.tsx");
 
 const checks = [
   ["mobile UX stylesheet is applied", css.includes("/* AZEZ_MOBILE_UX_POLISH")],
+  ["authenticated mobile workspace stylesheet is applied", css.includes("/* AZEZ_MOBILE_WORKSPACE_POLISH")],
   ["quality v2 stylesheet is applied", css.includes("/* AZEZ_INTERFACE_QUALITY_V2 */")],
   [
     "touch laptops are not forced into phone composition",
@@ -23,6 +24,12 @@ const checks = [
   ["operational text has an explicit 11px floor", css.includes("font-size:11px!important")],
   ["mobile controls meet a 44px target", css.includes("min-width:44px!important; min-height:44px!important")],
   ["dynamic mobile viewport is used", css.includes("height:100dvh!important")],
+  ["authenticated fields prevent browser auto zoom", css.includes("font-size:16px!important") && css.includes(".desktop-module-host :is(input,textarea,select)")],
+  ["authenticated grids collapse to one column", css.includes(".dashboard-grid,.metric-grid,.project-grid,.usage-grid,.plans-grid") && css.includes("grid-template-columns:1fr!important")],
+  ["AI chat receives a dedicated mobile layout", css.includes(".chat-surface{min-height:260px!important") && css.includes(".chat-input{grid-template-columns:1fr auto!important")],
+  ["CRM pipeline stays usable with horizontal snapping", css.includes(".pipeline{display:flex!important") && css.includes("scroll-snap-type:x proximity!important")],
+  ["project kanban stays usable with horizontal snapping", css.includes(".kanban-board{display:flex!important") && css.includes(".kanban-column{flex:0 0 min(84vw,320px)!important")],
+  ["account and registration use a single mobile column", css.includes(".auth-visual-panel{display:none!important") && css.includes(".auth-field-row{grid-template-columns:1fr!important")],
   ["system reduced-motion preference is supported", css.includes("@media (prefers-reduced-motion:reduce)")],
   ["forced-colors accessibility is supported", css.includes("@media (forced-colors:active)")],
   [
