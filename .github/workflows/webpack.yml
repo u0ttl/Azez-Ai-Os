@@ -18,9 +18,9 @@ concurrency:
 
 jobs:
   build:
-    name: Unified build, security, lint, and unit tests
+    name: Unified build, security, lint, unit tests, and visual review
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout source
@@ -97,6 +97,76 @@ jobs:
 
       - name: Run web unit tests
         run: npx --yes pnpm@11.7.0 exec vitest run lib/api-client.spec.ts lib/operations.spec.ts lib/product.spec.ts
+
+      - name: Capture visual review snapshots
+        id: visual
+        continue-on-error: true
+        shell: bash
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -euo pipefail
+          mkdir -p visual-review
+          npx --yes pnpm@11.7.0 exec next start -p 3100 > visual-review/server.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:3100/ > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Local Next.js server did not become ready." >&2
+            exit 1
+          fi
+
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$chrome" ]; then
+            echo "No Chromium-compatible browser is available on the runner." >&2
+            exit 1
+          fi
+
+          capture() {
+            name="$1"
+            size="$2"
+            path="$3"
+            profile="$RUNNER_TEMP/chrome-$name"
+            rm -rf "$profile"
+            timeout 35s "$chrome" \
+              --headless=new \
+              --no-sandbox \
+              --disable-gpu \
+              --hide-scrollbars \
+              --force-device-scale-factor=1 \
+              --window-size="$size" \
+              --virtual-time-budget=6000 \
+              --user-data-dir="$profile" \
+              --screenshot="visual-review/$name.png" \
+              "http://127.0.0.1:3100$path"
+            test -s "visual-review/$name.png"
+          }
+
+          capture home-mobile 390,844 /
+          capture home-wide-mobile 430,932 /
+          capture login-mobile 390,844 /login
+          capture register-mobile 390,844 /register
+          capture home-desktop 1440,1000 /
+
+      - name: Upload visual review snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-interface-visual-review
+          path: visual-review
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Enforce security gate
         if: steps.audit.outcome == 'failure'
