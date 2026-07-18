@@ -89,7 +89,7 @@ jobs:
             error_file="${label}.error"
 
             set +e
-            npx --yes vercel@latest --token "$VERCEL_TOKEN" curl "$path" \
+            npx --yes vercel@latest curl "$path" \
               --deployment "$url" \
               --silent --show-error --location \
               --write-out $'\n__HTTP_STATUS__:%{http_code}\n' \
