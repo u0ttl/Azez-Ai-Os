@@ -9,11 +9,11 @@ const marker = "/* AZEZ_INTERFACE_QUALITY_V2 */";
 
 let globals = readFileSync(globalsPath, "utf8");
 globals = globals
-  .replace(
+  .replaceAll(
     "@media (max-width:900px),(pointer:coarse),(any-pointer:coarse){",
     "@media (max-width:900px){",
   )
-  .replace(
+  .replaceAll(
     "@media (max-width:760px),(pointer:coarse),(any-pointer:coarse){",
     "@media (max-width:760px){",
   );
