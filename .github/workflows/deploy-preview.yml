@@ -62,9 +62,16 @@ jobs:
         id: deploy
         shell: bash
         run: |
-          set -euo pipefail
-          url="$(npx --yes vercel@latest deploy --yes --token "$VERCEL_TOKEN")"
-          printf '%s\n' "$url" | tee preview-url.txt
+          set +e
+          npx --yes vercel@latest deploy --yes --archive=tgz --token "$VERCEL_TOKEN" > preview-url.txt 2> deploy-error.txt
+          status=$?
+          cat deploy-error.txt
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Vercel preview deployment failed with exit code $status."
+            exit "$status"
+          fi
+          url="$(tail -n 1 preview-url.txt | tr -d '\r')"
+          printf '%s\n' "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Verify Preview routes
@@ -100,6 +107,7 @@ jobs:
           name: azez-vercel-preview-result
           path: |
             preview-url.txt
+            deploy-error.txt
             route-status.txt
             health.json
             ready.json
