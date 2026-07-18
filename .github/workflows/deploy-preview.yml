@@ -77,26 +77,47 @@ jobs:
       - name: Verify Preview routes
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           url="${{ steps.deploy.outputs.url }}"
+          : > route-status.txt
+          failed=0
 
-          npx --yes vercel@latest curl / --deployment "$url" --token "$VERCEL_TOKEN" --fail --silent --show-error --output home.html
-          npx --yes vercel@latest curl /login --deployment "$url" --token "$VERCEL_TOKEN" --fail --silent --show-error --output login.html
-          npx --yes vercel@latest curl /register --deployment "$url" --token "$VERCEL_TOKEN" --fail --silent --show-error --output register.html
-          npx --yes vercel@latest curl /api/v1/health --deployment "$url" --token "$VERCEL_TOKEN" --fail --silent --show-error --output health.json
+          verify_route() {
+            label="$1"
+            path="$2"
+            response_file="${label}.response"
+            error_file="${label}.error"
 
-          ready_status="$(npx --yes vercel@latest curl /api/v1/health/ready --deployment "$url" --token "$VERCEL_TOKEN" --silent --show-error --output ready.json --write-out '%{http_code}')"
-          printf 'ready_status=%s\n' "$ready_status" | tee route-status.txt
+            set +e
+            npx --yes vercel@latest curl "$path" \
+              --deployment "$url" \
+              --token "$VERCEL_TOKEN" \
+              --silent --show-error --location \
+              --write-out $'\n__HTTP_STATUS__:%{http_code}\n' \
+              > "$response_file" 2> "$error_file"
+            command_status=$?
+            set -e
 
-          test -s home.html
-          test -s login.html
-          test -s register.html
-          test -s health.json
-          test -s ready.json
+            http_status="$(sed -n 's/^__HTTP_STATUS__://p' "$response_file" | tail -n 1 | tr -d '\r')"
+            printf '%s path=%s command_status=%s http_status=%s\n' "$label" "$path" "$command_status" "${http_status:-missing}" | tee -a route-status.txt
 
-          if [ "$ready_status" != "200" ]; then
-            echo "::error::Preview readiness returned HTTP $ready_status."
-            cat ready.json
+            if [ "$command_status" -ne 0 ] || [ "$http_status" != "200" ]; then
+              failed=1
+              echo "--- ${label} stderr ---" | tee -a route-status.txt
+              cat "$error_file" | tee -a route-status.txt
+              echo "--- ${label} response tail ---" | tee -a route-status.txt
+              tail -n 40 "$response_file" | tee -a route-status.txt
+            fi
+          }
+
+          verify_route home /
+          verify_route login /login
+          verify_route register /register
+          verify_route health /api/v1/health
+          verify_route ready /api/v1/health/ready
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more Preview routes failed verification."
             exit 1
           fi
 
@@ -109,10 +130,7 @@ jobs:
             preview-url.txt
             deploy-error.txt
             route-status.txt
-            health.json
-            ready.json
-            home.html
-            login.html
-            register.html
+            *.response
+            *.error
           if-no-files-found: warn
           retention-days: 7
