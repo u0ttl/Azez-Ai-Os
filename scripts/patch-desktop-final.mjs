@@ -67,7 +67,7 @@ replaceOnce(
 );
 replaceOnce(
   `      case "home": return <HomeWorkspace snapshot={snapshot} lang={lang} open={openWindow} refresh={() => void refresh()} />;\n      case "ai": return <AIWorkspace />;`,
-  `      case "home": return <HomeWorkspace snapshot={snapshot} lang={lang} open={openWindow} refresh={() => void refresh()} />;\n      case "account": return <AccountWorkspace lang={lang} identity={snapshot.identity} onSessionChanged={refresh} openSecurity={() => openWindow("security")} />;\n      case "ai": return <AIWorkspace />;`,
+  `      case "home": return <HomeWorkspace snapshot={snapshot} lang={lang} open={openWindow} refresh={() => void refresh()} />;\n      case "account": return <AccountWorkspace lang={lang} {...(snapshot.identity ? { identity: snapshot.identity } : {})} onSessionChanged={refresh} openSecurity={() => openWindow("security")} />;\n      case "ai": return <AIWorkspace />;`,
   `case "account": return <AccountWorkspace`,
   "account renderer",
 );
