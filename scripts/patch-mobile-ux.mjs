@@ -15,6 +15,11 @@ const styleLayers = [
     marker: "/* AZEZ_MOBILE_WORKSPACE_POLISH",
     label: "unified authenticated mobile workspace design",
   },
+  {
+    path: join(root, "app", "mobile-visual-refinements.css"),
+    marker: "/* AZEZ_MOBILE_VISUAL_REFINEMENTS",
+    label: "screenshot-reviewed mobile contrast and controls",
+  },
 ];
 
 if (!existsSync(globalsPath)) throw new Error("Global stylesheet is missing.");
