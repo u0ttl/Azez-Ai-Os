@@ -63,11 +63,16 @@ if (existsSync(overrides)) {
   for (const entry of readdirSync(overrides)) cpSync(join(overrides, entry), join(root, entry), { recursive: true, force: true, dereference: true });
 }
 
-const interfaceHardeningPath = join(overrides, "app", "interface-hardening.css");
+const interfaceStylePaths = [
+  join(overrides, "app", "interface-hardening.css"),
+  join(overrides, "app", "interface-order-fix.css"),
+];
 const globalStylesPath = join(root, "app", "globals.css");
-if (existsSync(interfaceHardeningPath) && existsSync(globalStylesPath)) {
-  appendFileSync(globalStylesPath, `\n\n${readFileSync(interfaceHardeningPath, "utf8")}\n`);
-  console.log("Applied responsive menu, card, contrast, and overlap hardening.");
+if (existsSync(globalStylesPath)) {
+  for (const stylePath of interfaceStylePaths) {
+    if (existsSync(stylePath)) appendFileSync(globalStylesPath, `\n\n${readFileSync(stylePath, "utf8")}\n`);
+  }
+  console.log("Applied responsive menu, card, contrast, positioning, and overlap hardening.");
 }
 
 const desktopPath = join(root, "components", "azez-desktop.tsx");
