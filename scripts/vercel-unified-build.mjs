@@ -27,7 +27,8 @@ function overlay(from, to) {
 function findPackage(dir, target) {
   if (!existsSync(dir)) return undefined;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (["node_modules", ".next", ".azez-bootstrap"].includes(entry.name)) continue;
+    if (["node_modules", ".next", ".azez-bootstrap"].includes(entry.name))
+      continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       const found = findPackage(full, target);
@@ -75,15 +76,20 @@ function rewriteAuthTypeImports(dir) {
   return changed;
 }
 
-execSync("node scripts/vercel-bootstrap.mjs", { stdio: "inherit", env: process.env });
+execSync("node scripts/vercel-bootstrap.mjs", {
+  stdio: "inherit",
+  env: process.env,
+});
 
 const web = join(root, "apps", "web");
 const apiSource = join(root, "apps", "api");
 const apiTarget = join(root, "packages", "api");
 const overrides = join(root, "overrides");
 
-if (!existsSync(join(web, "package.json"))) throw new Error("Web application is missing");
-if (!existsSync(join(apiSource, "package.json"))) throw new Error("API application is missing");
+if (!existsSync(join(web, "package.json")))
+  throw new Error("Web application is missing");
+if (!existsSync(join(apiSource, "package.json")))
+  throw new Error("API application is missing");
 
 overlay(web, root);
 rmSync(web, { recursive: true, force: true });
@@ -91,7 +97,20 @@ rmSync(apiTarget, { recursive: true, force: true });
 overlay(apiSource, apiTarget);
 rmSync(apiSource, { recursive: true, force: true });
 overlay(overrides, root);
-execSync("node scripts/patch-auth-workspace.mjs", { stdio: "inherit", env: process.env });
+writeFileSync(
+  join(root, "app", "interface-polish.css"),
+  ["00", "01", "02"]
+    .map((part) => readFileSync(join(root, "app", `interface-polish.part.${part}.css`), "utf8"))
+    .join(""),
+);
+execSync("node scripts/patch-auth-workspace.mjs", {
+  stdio: "inherit",
+  env: process.env,
+});
+execSync("node scripts/patch-ui-polish.mjs", {
+  stdio: "inherit",
+  env: process.env,
+});
 
 const actualApi = findPackage(root, "@azez/api");
 if (!actualApi) throw new Error("Unable to locate @azez/api package");
@@ -175,12 +194,23 @@ execSync("npx --yes pnpm@11.7.0 --filter @azez/api typecheck", {
 console.log("Verified Nest API TypeScript.");
 
 const candidates = findNamedFiles(actualApi, "serverless.ts");
-console.log("serverless.ts candidates:", candidates.map((path) => relative(root, path)));
+console.log(
+  "serverless.ts candidates:",
+  candidates.map((path) => relative(root, path)),
+);
 const serverlessSource = candidates.sort((a, b) => a.length - b.length)[0];
-if (!serverlessSource) throw new Error("No serverless.ts found inside @azez/api package");
+if (!serverlessSource)
+  throw new Error("No serverless.ts found inside @azez/api package");
 
 const apiSrc = dirname(serverlessSource);
-const routeInternal = join(root, "app", "api", "v1", "[...path]", "internal-api");
+const routeInternal = join(
+  root,
+  "app",
+  "api",
+  "v1",
+  "[...path]",
+  "internal-api",
+);
 rmSync(routeInternal, { recursive: true, force: true });
 overlay(apiSrc, routeInternal);
 if (!existsSync(join(routeInternal, "serverless.ts"))) {
