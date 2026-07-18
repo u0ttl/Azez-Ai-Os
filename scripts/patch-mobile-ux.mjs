@@ -3,22 +3,32 @@ import { join } from "node:path";
 
 const root = process.cwd();
 const globalsPath = join(root, "app", "globals.css");
-const mobileCssPath = join(root, "app", "mobile-ux-polish.css");
 const layoutPath = join(root, "app", "layout.tsx");
-const marker = "/* AZEZ_MOBILE_UX_POLISH";
+const styleLayers = [
+  {
+    path: join(root, "app", "mobile-ux-polish.css"),
+    marker: "/* AZEZ_MOBILE_UX_POLISH",
+    label: "true touch-device mobile composition and typography",
+  },
+  {
+    path: join(root, "app", "mobile-workspace-polish.css"),
+    marker: "/* AZEZ_MOBILE_WORKSPACE_POLISH",
+    label: "unified authenticated mobile workspace design",
+  },
+];
 
-if (!existsSync(globalsPath) || !existsSync(mobileCssPath)) {
-  throw new Error("Mobile UX patch inputs are missing.");
-}
-
+if (!existsSync(globalsPath)) throw new Error("Global stylesheet is missing.");
 let globals = readFileSync(globalsPath, "utf8");
-if (!globals.includes(marker)) {
-  globals = `${globals}\n\n${readFileSync(mobileCssPath, "utf8")}\n`;
-  writeFileSync(globalsPath, globals);
-  console.log("Applied true touch-device mobile composition and typography.");
-} else {
-  console.log("Touch-device mobile composition already applied.");
+for (const layer of styleLayers) {
+  if (!existsSync(layer.path)) throw new Error(`Mobile UX style layer is missing: ${layer.path}`);
+  if (!globals.includes(layer.marker)) {
+    globals = `${globals}\n\n${readFileSync(layer.path, "utf8")}\n`;
+    console.log(`Applied ${layer.label}.`);
+  } else {
+    console.log(`${layer.label} already applied.`);
+  }
 }
+writeFileSync(globalsPath, globals);
 
 if (existsSync(layoutPath)) {
   let layout = readFileSync(layoutPath, "utf8");
