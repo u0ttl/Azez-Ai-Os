@@ -47,12 +47,20 @@ const styleLayers = [
     marker: "/* AZEZ_INTERFACE_ORDER_FIX */",
     label: "responsive positioning correction CSS",
   },
+  {
+    path: join(root, "motion-overrides", "app", "cinematic-motion.css"),
+    marker: "/* AZEZ_CINEMATIC_MOTION_V2 */",
+    label: "continuous cinematic AI Core motion CSS",
+  },
 ];
 
 if (existsSync(globalsPath)) {
   let globals = readFileSync(globalsPath, "utf8");
   for (const layer of styleLayers) {
-    if (!existsSync(layer.path) || globals.includes(layer.marker)) continue;
+    if (!existsSync(layer.path)) {
+      throw new Error(`Required style layer is missing: ${layer.path}`);
+    }
+    if (globals.includes(layer.marker)) continue;
     globals = `${globals}\n${layer.marker}\n${readFileSync(layer.path, "utf8")}\n`;
     console.log(`Appended ${layer.label}.`);
   }
