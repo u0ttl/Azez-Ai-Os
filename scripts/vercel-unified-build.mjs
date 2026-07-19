@@ -29,14 +29,14 @@ const cinematicEncoded = cinematicChunks
   .map((path) => readFileSync(path, "utf8").trim())
   .join("");
 const encodedHash = createHash("sha256").update(cinematicEncoded).digest("hex");
-if (encodedHash !== "b4bce946760d3bf1e47ad481e7e9d25f33e5a1b4477038f3e47d4657369c096c") {
+if (encodedHash !== "b75b0744844d92c849b18d6e2c5c6eee79cf64694c2e750d0409747e5e6ffcc7") {
   throw new Error(`Cinematic payload checksum mismatch: ${encodedHash}`);
 }
 rmSync(cinematicRuntime, { recursive: true, force: true });
 mkdirSync(cinematicRuntime, { recursive: true });
 writeFileSync(cinematicArchive, Buffer.from(cinematicEncoded, "base64"));
 const archiveHash = createHash("sha256").update(readFileSync(cinematicArchive)).digest("hex");
-if (archiveHash !== "15a657e3365f6cbe85e5757cea34d942258063a7dd377944d1765f00c86de6c8") {
+if (archiveHash !== "c209d45fb0a33bb3cc81cacad59cba9df719469cc9e22c8f68b536417d52f27d") {
   throw new Error(`Cinematic archive checksum mismatch: ${archiveHash}`);
 }
 execFileSync("tar", ["-xJf", cinematicArchive, "-C", root], { stdio: "inherit" });
