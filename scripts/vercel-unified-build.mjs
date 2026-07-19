@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -11,6 +11,16 @@ import {
 import { dirname, join, relative } from "node:path";
 
 const root = process.cwd();
+const cinematicPayload = join(root, ".azez-cinematic", "cinematic-overrides.tar.xz.b64");
+const cinematicRuntime = join(root, ".azez-cinematic", "runtime");
+const cinematicArchive = join(cinematicRuntime, "cinematic-overrides.tar.xz");
+
+if (!existsSync(cinematicPayload)) throw new Error(`Missing cinematic payload: ${cinematicPayload}`);
+rmSync(cinematicRuntime, { recursive: true, force: true });
+mkdirSync(cinematicRuntime, { recursive: true });
+writeFileSync(cinematicArchive, Buffer.from(readFileSync(cinematicPayload, "utf8").trim(), "base64"));
+execFileSync("tar", ["-xJf", cinematicArchive, "-C", root], { stdio: "inherit" });
+console.log("Extracted AZEZ AI OS cinematic overrides.");
 
 function overlay(from, to) {
   if (!existsSync(from)) return;
@@ -85,6 +95,7 @@ const web = join(root, "apps", "web");
 const apiSource = join(root, "apps", "api");
 const apiTarget = join(root, "packages", "api");
 const overrides = join(root, "overrides");
+const cinematicOverrides = join(root, "cinematic-overrides");
 
 if (!existsSync(join(web, "package.json")))
   throw new Error("Web application is missing");
@@ -97,6 +108,7 @@ rmSync(apiTarget, { recursive: true, force: true });
 overlay(apiSource, apiTarget);
 rmSync(apiSource, { recursive: true, force: true });
 overlay(overrides, root);
+overlay(cinematicOverrides, root);
 writeFileSync(
   join(root, "app", "interface-polish.css"),
   ["00", "01", "02"]
@@ -107,14 +119,14 @@ execSync("node scripts/patch-auth-workspace.mjs", {
   stdio: "inherit",
   env: process.env,
 });
-execSync("node scripts/patch-ui-polish.mjs", {
+execSync("node scripts/validate-cinematic-os.mjs", {
   stdio: "inherit",
   env: process.env,
 });
-execSync("node scripts/patch-ui-lint.mjs", {
-  stdio: "inherit",
-  env: process.env,
-});
+if (process.env.AZEZ_PREFLIGHT_ONLY === "1") {
+  console.log("AZEZ AI OS cinematic preflight completed before dependency installation.");
+  process.exit(0);
+}
 
 const actualApi = findPackage(root, "@azez/api");
 if (!actualApi) throw new Error("Unable to locate @azez/api package");
