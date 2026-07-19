@@ -1,4 +1,5 @@
 import { execFileSync, execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -11,16 +12,35 @@ import {
 import { dirname, join, relative } from "node:path";
 
 const root = process.cwd();
-const cinematicPayload = join(root, ".azez-cinematic", "cinematic-overrides.tar.xz.b64");
-const cinematicRuntime = join(root, ".azez-cinematic", "runtime");
+const cinematicPayloadDir = join(root, ".azez-cinematic");
+const cinematicRuntime = join(cinematicPayloadDir, "runtime");
 const cinematicArchive = join(cinematicRuntime, "cinematic-overrides.tar.xz");
+const cinematicChunks = existsSync(cinematicPayloadDir)
+  ? readdirSync(cinematicPayloadDir)
+      .filter((name) => /^cinematic-overrides\.b64\.\d+$/.test(name))
+      .sort()
+      .map((name) => join(cinematicPayloadDir, name))
+  : [];
 
-if (!existsSync(cinematicPayload)) throw new Error(`Missing cinematic payload: ${cinematicPayload}`);
+if (cinematicChunks.length === 0) {
+  throw new Error(`Missing cinematic payload chunks in: ${cinematicPayloadDir}`);
+}
+const cinematicEncoded = cinematicChunks
+  .map((path) => readFileSync(path, "utf8").trim())
+  .join("");
+const encodedHash = createHash("sha256").update(cinematicEncoded).digest("hex");
+if (encodedHash !== "b4bce946760d3bf1e47ad481e7e9d25f33e5a1b4477038f3e47d4657369c096c") {
+  throw new Error(`Cinematic payload checksum mismatch: ${encodedHash}`);
+}
 rmSync(cinematicRuntime, { recursive: true, force: true });
 mkdirSync(cinematicRuntime, { recursive: true });
-writeFileSync(cinematicArchive, Buffer.from(readFileSync(cinematicPayload, "utf8").trim(), "base64"));
+writeFileSync(cinematicArchive, Buffer.from(cinematicEncoded, "base64"));
+const archiveHash = createHash("sha256").update(readFileSync(cinematicArchive)).digest("hex");
+if (archiveHash !== "15a657e3365f6cbe85e5757cea34d942258063a7dd377944d1765f00c86de6c8") {
+  throw new Error(`Cinematic archive checksum mismatch: ${archiveHash}`);
+}
 execFileSync("tar", ["-xJf", cinematicArchive, "-C", root], { stdio: "inherit" });
-console.log("Extracted AZEZ AI OS cinematic overrides.");
+console.log(`Extracted AZEZ AI OS cinematic overrides from ${cinematicChunks.length} verified chunks.`);
 
 function overlay(from, to) {
   if (!existsSync(from)) return;
