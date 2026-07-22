@@ -32,6 +32,7 @@ const checks = [
   ["project kanban stays usable with horizontal snapping", css.includes(".kanban-board{display:flex!important") && css.includes(".kanban-column{flex:0 0 min(84vw,320px)!important")],
   ["account and registration use a single mobile column", css.includes(".auth-visual-panel{display:none!important") && css.includes(".auth-field-row{grid-template-columns:1fr!important")],
   ["mobile navigation reserves a non-overlapping content gutter", css.includes("padding-bottom:calc(116px + env(safe-area-inset-bottom))!important")],
+  ["six mobile navigation items fit without edge clipping", css.includes("flex:1 1 58px!important") && css.includes("min-width:54px!important") && css.includes("justify-content:space-between!important")],
   ["registration account type has an explicit active state", css.includes('.account-type-button[aria-pressed="true"]') && css.includes("background-color:#6546d7!important") && css.includes("color:#fff!important")],
   ["mobile selection cards preserve readable contrast", css.includes(".project-card.selected,.company-item.active,.base-item.active,.workflow-item.active") && css.includes("border-color:#3285ad!important")],
   ["mobile headings and tool labels have explicit contrast", css.includes(".right-heading h2") && css.includes(".tool-group .icon-action small") && css.includes("color:#f2f9fd!important")],

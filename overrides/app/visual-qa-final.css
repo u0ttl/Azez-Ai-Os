@@ -98,12 +98,16 @@
 
   .azez-desktop .left-sidebar nav {
     scroll-padding-inline:12px!important;
-    padding-inline:8px!important;
+    padding-inline:4px!important;
+    gap:4px!important;
+    justify-content:space-between!important;
   }
 
   .azez-desktop .left-sidebar .nav-button {
-    flex:0 0 67px!important;
-    min-width:67px!important;
+    flex:1 1 58px!important;
+    width:auto!important;
+    min-width:54px!important;
+    max-width:62px!important;
   }
 
   .azez-desktop .window-identity strong { color:#f2f9fd!important; }
