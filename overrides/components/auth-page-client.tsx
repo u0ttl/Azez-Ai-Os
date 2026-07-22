@@ -66,7 +66,11 @@ export function AuthPageClient({ mode }: { mode: Mode }) {
 
   useEffect(() => {
     document.body.dataset.page = "auth";
-    return () => { delete document.body.dataset.page; };
+    const resetScroll = window.setTimeout(() => window.scrollTo(0, 0), 0);
+    return () => {
+      window.clearTimeout(resetScroll);
+      delete document.body.dataset.page;
+    };
   }, []);
 
   useEffect(() => {

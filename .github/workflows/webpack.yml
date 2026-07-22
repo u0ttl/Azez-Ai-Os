@@ -21,6 +21,20 @@ jobs:
     name: Unified build, security, lint, unit tests, and visual review
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: azez
+          POSTGRES_USER: azez
+          POSTGRES_PASSWORD: azez
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U azez -d azez"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Checkout source
@@ -104,11 +118,13 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           DATABASE_URL: "postgresql://azez:azez@127.0.0.1:5432/azez?sslmode=disable"
+          SESSION_SECRET: "azez-visual-review-session-secret-2026-only"
           REDIS_REQUIRED: "false"
           MALWARE_SCAN_REQUIRED: "false"
         run: |
           set -euo pipefail
           mkdir -p visual-review
+          npx --yes pnpm@11.7.0 --filter @azez/database exec prisma db push --skip-generate
           npx --yes pnpm@11.7.0 exec next start -p 3100 > visual-review/server.log 2>&1 &
           server_pid=$!
           cleanup() {
@@ -161,14 +177,7 @@ jobs:
           capture register-mobile 390,844 /register
           capture home-desktop 1440,1000 /
           capture appearance-mobile 390,844 '/?visual-review=appearance'
-          capture ai-mobile 390,844 '/?visual-review=ai'
-          capture projects-mobile 390,844 '/?visual-review=projects'
-          capture crm-mobile 390,844 '/?visual-review=crm'
-          capture knowledge-mobile 390,844 '/?visual-review=knowledge'
-          capture workflows-mobile 390,844 '/?visual-review=workflows'
-          capture billing-mobile 390,844 '/?visual-review=billing'
-          capture terminal-mobile 390,844 '/?visual-review=terminal'
-          capture settings-mobile 390,844 '/?visual-review=settings'
+          node scripts/capture-authenticated-visual-review.mjs "$chrome" http://localhost:3100 visual-review
 
       - name: Upload visual review snapshots
         if: always()

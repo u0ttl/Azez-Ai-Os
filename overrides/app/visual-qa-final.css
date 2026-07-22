@@ -68,9 +68,11 @@
   }
 
   .azez-desktop[data-theme="light"] .right-heading h2,
-  .azez-desktop[data-theme="light"] .tool-group h3 { color:#102b3d!important; text-shadow:none; }
+  .azez-desktop[data-theme="light"] .tool-group h3,
+  .azez-desktop[data-theme="light"] .feature-grid button strong { color:#f2f9fd!important; text-shadow:none; }
   .azez-desktop[data-theme="light"] .right-heading span,
-  .azez-desktop[data-theme="light"] .tool-group .icon-action small { color:#49697d!important; }
+  .azez-desktop[data-theme="light"] .tool-group .icon-action small,
+  .azez-desktop[data-theme="light"] .feature-grid button small { color:#b9d0dc!important; }
 
   .azez-desktop .top-control .search-control > span:not(.search-symbol) {
     display:block!important;
@@ -93,8 +95,8 @@
   }
 
   .azez-desktop .left-sidebar .nav-button {
-    flex:0 0 76px!important;
-    min-width:76px!important;
+    flex:0 0 70px!important;
+    min-width:70px!important;
   }
 
   .auth-card {
