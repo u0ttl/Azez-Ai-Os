@@ -80,22 +80,17 @@ try {
   };
 
   await navigate("/");
-  const unique = Date.now().toString(36);
-  const registration = await send("Runtime.evaluate", {
+  const login = await send("Runtime.evaluate", {
     expression: `(async () => {
       const csrfResponse = await fetch("/api/v1/auth/csrf", { credentials: "include", cache: "no-store" });
       const csrf = await csrfResponse.json();
-      const response = await fetch("/api/v1/auth/register", {
+      const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json", "x-csrf-token": csrf.csrfToken },
         body: JSON.stringify({
-          name: "Visual Review",
-          email: "visual-review-${unique}@example.test",
-          password: "VisualReview!2026#Safe",
-          organizationName: "AZEZ Visual Review",
-          organizationSlug: "visual-review-${unique}",
-          locale: "ar"
+          email: "visual-review@example.test",
+          password: "VisualReview!2026#Safe"
         })
       });
       return { ok: response.ok, status: response.status, body: await response.text() };
@@ -103,8 +98,8 @@ try {
     awaitPromise: true,
     returnByValue: true,
   }, sessionId);
-  const registrationResult = registration.result?.value;
-  if (!registrationResult?.ok) throw new Error(`Visual review registration failed: ${JSON.stringify(registrationResult)}`);
+  const loginResult = login.result?.value;
+  if (!loginResult?.ok) throw new Error(`Visual review login failed: ${JSON.stringify(loginResult)}`);
 
   const captures = [
     ["home-authenticated-mobile", "/"],
