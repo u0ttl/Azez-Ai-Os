@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 35
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: azez
           POSTGRES_USER: azez
@@ -124,6 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p visual-review
+          node --input-type=module -e 'import pg from "pg"; const client = new pg.Client({ connectionString: process.env.DATABASE_URL }); await client.connect(); await client.query("CREATE EXTENSION IF NOT EXISTS vector"); await client.end();'
           npx --yes pnpm@11.7.0 --filter @azez/database exec prisma db push
           npx --yes pnpm@11.7.0 exec next start -p 3100 > visual-review/server.log 2>&1 &
           server_pid=$!
