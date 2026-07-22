@@ -97,17 +97,19 @@
   .azez-desktop[data-theme="light"] .top-control .appearance-trigger::before { color:#173d55!important; }
 
   .azez-desktop .left-sidebar nav {
-    scroll-padding-inline:12px!important;
-    padding-inline:4px!important;
-    gap:4px!important;
-    justify-content:space-between!important;
+    scroll-padding-inline:0!important;
+    padding-inline:0!important;
+    gap:0!important;
+    justify-content:flex-start!important;
+    scroll-snap-type:x mandatory!important;
   }
 
   .azez-desktop .left-sidebar .nav-button {
-    flex:0 0 calc((100% - 20px)/6)!important;
-    width:calc((100% - 20px)/6)!important;
+    flex:0 0 20%!important;
+    width:20%!important;
     min-width:44px!important;
     max-width:none!important;
+    scroll-snap-align:start!important;
   }
 
   .azez-desktop .window-identity strong { color:#f2f9fd!important; }
