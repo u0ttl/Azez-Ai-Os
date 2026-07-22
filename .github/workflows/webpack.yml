@@ -159,10 +159,14 @@ jobs:
             path="$3"
             profile="$RUNNER_TEMP/chrome-$name"
             rm -rf "$profile"
-            timeout 35s "$chrome" \
+            timeout 60s "$chrome" \
               --headless=new \
               --no-sandbox \
               --disable-gpu \
+              --disable-background-networking \
+              --disable-component-update \
+              --disable-sync \
+              --metrics-recording-only \
               --hide-scrollbars \
               --force-device-scale-factor=1 \
               --window-size="$size" \
