@@ -134,6 +134,21 @@ rootPackage.devDependencies = {
 };
 writeFileSync(rootPackagePath, JSON.stringify(rootPackage, null, 2));
 
+const workspacePath = join(root, "pnpm-workspace.yaml");
+let workspaceConfig = readFileSync(workspacePath, "utf8");
+if (!workspaceConfig.includes("'fast-uri@3.1.3': 3.1.4")) {
+  workspaceConfig = workspaceConfig
+    .replace("  '@hono/node-server': 1.19.13", "  '@hono/node-server': 2.0.11")
+    .replace(
+      "  '@fastify/static': 9.1.1",
+      "  '@fastify/static': 9.1.1\n  'fast-uri@3.1.3': 3.1.4\n  'fast-uri@4.1.0': 4.1.1\n  'sharp@0.34.5': 0.35.3",
+    );
+  if (!workspaceConfig.includes("'@hono/node-server': 2.0.11") || !workspaceConfig.includes("'sharp@0.34.5': 0.35.3")) {
+    throw new Error("Security override targets are missing from pnpm-workspace.yaml");
+  }
+  writeFileSync(workspacePath, workspaceConfig);
+}
+
 writeFileSync(
   join(root, "tsconfig.json"),
   JSON.stringify(

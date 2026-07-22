@@ -136,8 +136,8 @@ export function AuthForm({ mode, lang }: { mode: Mode; lang: Lang }) {
       {isRegister && (
         <>
           <div style={typeSwitchStyle} role="group" aria-label={lang === "ar" ? "نوع الحساب" : "Account type"}>
-            <button type="button" style={activeTypeButton(accountType === "individual")} onClick={() => setAccountType("individual")}>◉ {copy.individual}</button>
-            <button type="button" style={activeTypeButton(accountType === "business")} onClick={() => setAccountType("business")}>▦ {copy.business}</button>
+            <button className={accountType === "individual" ? "account-type-button active" : "account-type-button"} type="button" style={activeTypeButton(accountType === "individual")} aria-pressed={accountType === "individual"} onClick={() => setAccountType("individual")}>◉ {copy.individual}</button>
+            <button className={accountType === "business" ? "account-type-button active" : "account-type-button"} type="button" style={activeTypeButton(accountType === "business")} aria-pressed={accountType === "business"} onClick={() => setAccountType("business")}>▦ {copy.business}</button>
           </div>
           <label>
             <span>{copy.name}</span>

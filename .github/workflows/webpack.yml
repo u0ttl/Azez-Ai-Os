@@ -160,6 +160,15 @@ jobs:
           capture login-mobile 390,844 /login
           capture register-mobile 390,844 /register
           capture home-desktop 1440,1000 /
+          capture appearance-mobile 390,844 '/?visual-review=appearance'
+          capture ai-mobile 390,844 '/?visual-review=ai'
+          capture projects-mobile 390,844 '/?visual-review=projects'
+          capture crm-mobile 390,844 '/?visual-review=crm'
+          capture knowledge-mobile 390,844 '/?visual-review=knowledge'
+          capture workflows-mobile 390,844 '/?visual-review=workflows'
+          capture billing-mobile 390,844 '/?visual-review=billing'
+          capture terminal-mobile 390,844 '/?visual-review=terminal'
+          capture settings-mobile 390,844 '/?visual-review=settings'
 
       - name: Upload visual review snapshots
         if: always()

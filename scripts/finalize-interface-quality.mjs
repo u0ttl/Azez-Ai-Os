@@ -6,6 +6,8 @@ const root = process.cwd();
 const globalsPath = join(root, "app", "globals.css");
 const polishPath = join(root, "app", "interface-polish.css");
 const marker = "/* AZEZ_INTERFACE_QUALITY_V2 */";
+const visualQaPath = join(root, "app", "visual-qa-final.css");
+const visualQaMarker = "/* AZEZ_VISUAL_QA_FINAL */";
 
 let globals = readFileSync(globalsPath, "utf8");
 globals = globals
@@ -25,5 +27,9 @@ if (!globals.includes(marker)) {
   globals += `\n\n${polish.slice(qualityStart)}\n`;
 }
 
+if (!globals.includes(visualQaMarker)) {
+  globals += `\n\n${readFileSync(visualQaPath, "utf8")}\n`;
+}
+
 writeFileSync(globalsPath, globals);
-console.log("Finalized AZEZ interface quality v2 in generated global styles.");
+console.log("Finalized AZEZ interface quality v2 and visual QA fixes in generated global styles.");

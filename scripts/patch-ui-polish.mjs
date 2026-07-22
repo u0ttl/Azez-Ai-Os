@@ -43,6 +43,31 @@ replaceOnce(
 );
 
 replaceOnce(
+  `  const activeItem = useMemo(() => ALL_ITEMS.find((item) => item.id === active), [active]);`,
+  `  useEffect(() => {
+    const requestedView = new URLSearchParams(window.location.search).get("visual-review");
+    if (!requestedView) return;
+    const revealRequestedView = window.setTimeout(() => {
+      if (requestedView === "appearance") {
+        setAppearanceOpen(true);
+        return;
+      }
+      const requestedItem = ALL_ITEMS.find((item) => item.id === requestedView);
+      if (requestedItem) {
+        setActive(requestedItem.id);
+        setMaximized(false);
+        setMinimized(false);
+      }
+    }, 0);
+    return () => window.clearTimeout(revealRequestedView);
+  }, []);
+
+  const activeItem = useMemo(() => ALL_ITEMS.find((item) => item.id === active), [active]);`,
+  `get("visual-review")`,
+  "deterministic visual-review routes",
+);
+
+replaceOnce(
   `    setPaletteOpen(false);\n    const item`,
   `    setPaletteOpen(false);\n    setAppearanceOpen(false);\n    const item`,
   `setAppearanceOpen(false);\n    const item`,

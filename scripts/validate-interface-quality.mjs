@@ -15,6 +15,7 @@ const checks = [
   ["mobile UX stylesheet is applied", css.includes("/* AZEZ_MOBILE_UX_POLISH")],
   ["authenticated mobile workspace stylesheet is applied", css.includes("/* AZEZ_MOBILE_WORKSPACE_POLISH")],
   ["quality v2 stylesheet is applied", css.includes("/* AZEZ_INTERFACE_QUALITY_V2 */")],
+  ["final visual QA stylesheet is applied last", css.includes("/* AZEZ_VISUAL_QA_FINAL */") && css.lastIndexOf("/* AZEZ_VISUAL_QA_FINAL */") > css.lastIndexOf("/* AZEZ_INTERFACE_QUALITY_V2 */")],
   [
     "touch laptops are not forced into phone composition",
     !css.includes("@media (max-width:760px),(pointer:coarse),(any-pointer:coarse)") &&
@@ -30,6 +31,9 @@ const checks = [
   ["CRM pipeline stays usable with horizontal snapping", css.includes(".pipeline{display:flex!important") && css.includes("scroll-snap-type:x proximity!important")],
   ["project kanban stays usable with horizontal snapping", css.includes(".kanban-board{display:flex!important") && css.includes(".kanban-column{flex:0 0 min(84vw,320px)!important")],
   ["account and registration use a single mobile column", css.includes(".auth-visual-panel{display:none!important") && css.includes(".auth-field-row{grid-template-columns:1fr!important")],
+  ["mobile navigation reserves a non-overlapping content gutter", css.includes("padding-bottom:calc(116px + env(safe-area-inset-bottom))!important")],
+  ["registration account type has an explicit active state", css.includes(".account-type-button.active") && css.includes("color:#fff!important")],
+  ["mobile headings and tool labels have explicit contrast", css.includes(".right-heading h2") && css.includes(".tool-group .icon-action small") && css.includes("color:#f2f9fd!important")],
   ["system reduced-motion preference is supported", css.includes("@media (prefers-reduced-motion:reduce)")],
   ["forced-colors accessibility is supported", css.includes("@media (forced-colors:active)")],
   [
