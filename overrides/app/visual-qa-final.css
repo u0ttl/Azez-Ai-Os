@@ -104,10 +104,10 @@
   }
 
   .azez-desktop .left-sidebar .nav-button {
-    flex:1 1 58px!important;
-    width:auto!important;
-    min-width:54px!important;
-    max-width:62px!important;
+    flex:0 0 calc((100% - 20px)/6)!important;
+    width:calc((100% - 20px)/6)!important;
+    min-width:44px!important;
+    max-width:none!important;
   }
 
   .azez-desktop .window-identity strong { color:#f2f9fd!important; }
