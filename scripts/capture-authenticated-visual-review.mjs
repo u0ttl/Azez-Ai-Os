@@ -128,5 +128,18 @@ try {
   console.log(`Captured ${captures.length} authenticated visual-review snapshots.`);
 } finally {
   browser.kill("SIGTERM");
-  rmSync(profile, { recursive: true, force: true });
+  await Promise.race([
+    new Promise((resolveExit) => {
+      if (browser.exitCode !== null) resolveExit();
+      else browser.once("exit", resolveExit);
+    }),
+    delay(2500),
+  ]);
+  try {
+    rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 150 });
+  } catch (cleanupError) {
+    // The runner discards its temporary directory. A late Chrome cache writer
+    // must not turn successfully captured screenshots into a failed CI result.
+    console.warn(`Unable to remove temporary Chrome profile: ${cleanupError instanceof Error ? cleanupError.message : cleanupError}`);
+  }
 }
