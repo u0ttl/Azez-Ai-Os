@@ -26,17 +26,17 @@
 
 .azez-desktop[data-theme="light"] .right-heading h2,
 .azez-desktop[data-theme="light"] .tool-group h3,
-.azez-desktop[data-theme="light"] .bottom-widget > header > span,
-.azez-desktop[data-theme="light"] .bottom-widget button strong,
 .azez-desktop[data-theme="light"] .left-status-panel strong,
-.azez-desktop[data-theme="light"] .feature-grid button strong { color:#102b3d!important; }
+.azez-desktop[data-theme="light"] .feature-grid button strong { color:#f2f9fd!important; }
 
 .azez-desktop[data-theme="light"] .right-heading span,
 .azez-desktop[data-theme="light"] .tool-group .icon-action small,
-.azez-desktop[data-theme="light"] .bottom-widget p,
-.azez-desktop[data-theme="light"] .bottom-widget button small,
 .azez-desktop[data-theme="light"] .left-status-panel :is(small,span,p),
-.azez-desktop[data-theme="light"] .feature-grid button small { color:#49697d!important; }
+.azez-desktop[data-theme="light"] .feature-grid button small { color:#b9d0dc!important; }
+.azez-desktop[data-theme="light"] .bottom-widget > header > span,
+.azez-desktop[data-theme="light"] .bottom-widget button strong { color:#102b3d!important; }
+.azez-desktop[data-theme="light"] .bottom-widget p,
+.azez-desktop[data-theme="light"] .bottom-widget button small { color:#49697d!important; }
 .azez-desktop[data-theme="light"] .bottom-widget { background:linear-gradient(155deg,rgba(250,253,255,.98),rgba(226,239,247,.98))!important; }
 
 .auth-page .account-type-button { color:var(--auth-ink)!important; }
@@ -95,14 +95,28 @@
   }
 
   .azez-desktop .left-sidebar .nav-button {
-    flex:0 0 70px!important;
-    min-width:70px!important;
+    flex:0 0 67px!important;
+    min-width:67px!important;
+  }
+
+  .azez-desktop .window-identity strong { color:#f2f9fd!important; }
+  .azez-desktop .window-identity small { color:#a9c4d3!important; opacity:1!important; }
+  .azez-desktop .desktop-module-host .module-header h1,
+  .azez-desktop .desktop-module-host .module-header h2 { color:#102b3d!important; text-shadow:none!important; }
+  .azez-desktop .desktop-module-host .module-header p { color:#587184!important; opacity:1!important; }
+  .azez-desktop .desktop-module-host .auth-error {
+    background:#fff0f2!important;
+    color:#9f1f3a!important;
+    border-color:#eab2bd!important;
   }
 
   .auth-card {
     justify-content:flex-start!important;
     padding-top:max(18px,env(safe-area-inset-top))!important;
     padding-bottom:max(30px,env(safe-area-inset-bottom))!important;
+    content-visibility:visible!important;
+    contain:none!important;
+    overflow-anchor:none!important;
   }
 
   .auth-toolbar {
