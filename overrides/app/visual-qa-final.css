@@ -39,12 +39,19 @@
 .azez-desktop[data-theme="light"] .bottom-widget button small { color:#49697d!important; }
 .azez-desktop[data-theme="light"] .bottom-widget { background:linear-gradient(155deg,rgba(250,253,255,.98),rgba(226,239,247,.98))!important; }
 
-.auth-page .account-type-button { color:var(--auth-ink)!important; }
-.auth-page .account-type-button.active {
-  border-color:transparent!important;
-  background:linear-gradient(115deg,var(--auth-accent),var(--auth-accent-2))!important;
+.auth-page form.auth-form .account-type-button {
+  border:1px solid var(--auth-border)!important;
+  background-color:var(--auth-surface)!important;
+  background-image:none!important;
+  color:var(--auth-ink)!important;
+}
+.auth-page form.auth-form .account-type-button.active,
+.auth-page form.auth-form .account-type-button[aria-pressed="true"] {
+  border:2px solid #4b31b4!important;
+  background-color:#6546d7!important;
+  background-image:linear-gradient(115deg,#6546d7,#087ea4)!important;
   color:#fff!important;
-  box-shadow:0 10px 24px color-mix(in srgb,var(--auth-accent) 24%,transparent)!important;
+  box-shadow:0 10px 24px rgba(101,70,215,.24)!important;
 }
 
 @media (max-width:760px) {
@@ -110,6 +117,25 @@
     border-color:#eab2bd!important;
   }
 
+  /* Selection cards are controls, not primary actions. Keep their labels on a
+     light readable surface instead of inheriting the generic action gradient. */
+  .azez-desktop[data-theme="light"] .desktop-module-host :is(.project-card,.company-item,.base-item,.workflow-item) {
+    background:linear-gradient(145deg,#fff,#f4f9fc)!important;
+    color:#102b3d!important;
+    border-color:rgba(37,100,137,.26)!important;
+  }
+  .azez-desktop[data-theme="light"] .desktop-module-host :is(.project-card.selected,.company-item.active,.base-item.active,.workflow-item.active) {
+    background:linear-gradient(145deg,#e4f6fc,#eef0ff)!important;
+    border-color:#3285ad!important;
+    box-shadow:0 0 0 2px rgba(50,133,173,.13),0 10px 28px rgba(15,48,68,.1)!important;
+  }
+  .azez-desktop[data-theme="light"] .desktop-module-host :is(.project-card,.company-item,.base-item,.workflow-item) :is(h2,strong,b) {
+    color:#102b3d!important;
+  }
+  .azez-desktop[data-theme="light"] .desktop-module-host :is(.project-card,.company-item,.base-item,.workflow-item) :is(p,small,footer) {
+    color:#587184!important;
+  }
+
   .auth-card {
     justify-content:flex-start!important;
     padding-top:max(18px,env(safe-area-inset-top))!important;
@@ -161,5 +187,5 @@
 }
 
 @media (forced-colors:active) {
-  .auth-page .account-type-button.active { border:2px solid Highlight!important; background:Highlight!important; color:HighlightText!important; }
+  .auth-page form.auth-form .account-type-button.active { border:2px solid Highlight!important; background:Highlight!important; color:HighlightText!important; }
 }

@@ -27,8 +27,15 @@ if (!globals.includes(marker)) {
   globals += `\n\n${polish.slice(qualityStart)}\n`;
 }
 
-if (!globals.includes(visualQaMarker)) {
-  globals += `\n\n${readFileSync(visualQaPath, "utf8")}\n`;
+const visualQa = readFileSync(visualQaPath, "utf8");
+const existingVisualQa = globals.indexOf(visualQaMarker);
+if (existingVisualQa >= 0) {
+  // The generated workspace can be finalized more than once locally. Refresh
+  // the terminal QA layer so a later correction is never hidden by an older
+  // marker-bearing copy.
+  globals = `${globals.slice(0, existingVisualQa).trimEnd()}\n\n${visualQa}\n`;
+} else {
+  globals += `\n\n${visualQa}\n`;
 }
 
 writeFileSync(globalsPath, globals);
