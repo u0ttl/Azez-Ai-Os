@@ -127,10 +127,13 @@ const apiPackage = JSON.parse(readFileSync(apiPackagePath, "utf8"));
 rootPackage.dependencies = {
   ...(rootPackage.dependencies ?? {}),
   ...(apiPackage.dependencies ?? {}),
+  // Keep the generated web runtime on the current security-patched release.
+  next: "16.2.11",
 };
 rootPackage.devDependencies = {
   ...(rootPackage.devDependencies ?? {}),
   ...(apiPackage.devDependencies ?? {}),
+  "eslint-config-next": "16.2.11",
 };
 writeFileSync(rootPackagePath, JSON.stringify(rootPackage, null, 2));
 
