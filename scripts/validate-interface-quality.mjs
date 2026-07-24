@@ -11,6 +11,7 @@ const read = (path) => {
 const css = read("app/globals.css");
 const layout = read("app/layout.tsx");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
+const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
 const visualQaMarker = "/* AZEZ_VISUAL_QA_FINAL */";
 
 const checks = [
@@ -19,8 +20,10 @@ const checks = [
   ["quality v2 stylesheet is applied", css.includes("/* AZEZ_INTERFACE_QUALITY_V2 */")],
   ["final visual QA stylesheet is applied", css.includes(visualQaMarker)],
   [
-    "premium agency layer is applied last",
-    css.includes(premiumMarker) && css.lastIndexOf(premiumMarker) > css.lastIndexOf(visualQaMarker),
+    "premium cohesion layer is applied last",
+    css.includes(cohesionMarker) &&
+      css.lastIndexOf(cohesionMarker) > css.lastIndexOf(premiumMarker) &&
+      css.lastIndexOf(premiumMarker) > css.lastIndexOf(visualQaMarker),
   ],
   [
     "touch laptops are not forced into phone composition",
@@ -42,8 +45,8 @@ const checks = [
   ["registration account type has an explicit active state", css.includes('.account-type-button[aria-pressed="true"]') && css.includes("color:#fff!important")],
   ["mobile selection cards preserve readable contrast", css.includes(".project-card.selected,.company-item.active,.base-item.active,.workflow-item.active") && css.includes("border-color:#3285ad!important")],
   ["mobile headings and tool labels have explicit contrast", css.includes(".right-heading h2") && css.includes(".tool-group .icon-action small") && css.includes("color:#f2f9fd!important")],
-  ["dark desktop monitoring widgets stay inside the visual system", css.includes('.azez-desktop:not([data-theme="light"]) .bottom-widget') && css.includes("--az-premium-surface")],
-  ["mobile home removes secondary monitoring stack", css.includes(".azez-desktop .bottom-console{display:none!important")],
+  ["desktop monitoring strip remains dark across shell themes", css.includes('.azez-desktop[data-theme="light"] .bottom-widget') && css.includes("AZEZ_PREMIUM_COHESION_FIX")],
+  ["mobile home removes secondary monitoring stack", css.includes(".azez-desktop .bottom-console{display:none!important") || css.includes(".azez-desktop .bottom-console { display: none !important")],
   ["mobile scene uses a bounded premium composition", css.includes("height:min(430px,calc(100dvh - 208px))!important") && css.includes("border-radius:22px!important")],
   ["authentication avoids generic purple primary actions", css.includes("linear-gradient(115deg,#086f92,#0c9aba)!important")],
   ["premium interactions use transform-based motion", css.includes("cubic-bezier(.2,.8,.2,1)") && !css.includes("transition:top") && !css.includes("transition:left")],
