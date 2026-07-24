@@ -10,6 +10,8 @@ const read = (path) => {
 
 const css = read("app/globals.css");
 const layout = read("app/layout.tsx");
+const desktop = read("components/azez-desktop.tsx");
+const webglCore = read("components/holographic-ai-core.tsx");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
 const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
 const spatial3dMarker = "/* AZEZ_SPATIAL_3D_REPAIR */";
@@ -56,6 +58,12 @@ const checks = [
   ["spatial cards preserve 3D transforms", css.includes("transform-style:preserve-3d!important") && css.includes("translate3d(0,-3px,18px)")],
   ["authored desktop z-depth is restored", css.includes(".azez-desktop>.scene-shell{position:absolute!important;z-index:1!important}") && css.includes(".azez-desktop>.system-window{position:fixed!important;z-index:120!important}")],
   ["touch devices retain holographic animation", css.includes("@media (hover:none) and (pointer:coarse)") && css.includes("animation-duration:12s!important") && css.includes("animation-iteration-count:infinite!important")],
+  ["desktop mounts the live WebGL core", desktop.includes('import { HolographicAICore }') && desktop.includes('<HolographicAICore onActivate={() => openWindow("ai")}') && !desktop.includes('data-fallback="true"')],
+  ["WebGL core requests accelerated rendering with fallback", webglCore.includes('canvas.getContext("webgl2"') && webglCore.includes('canvas.getContext("webgl"') && webglCore.includes('powerPreference: "high-performance"')],
+  ["WebGL core contains animated 3D shader geometry", webglCore.includes("MAX_STEPS 78") && webglCore.includes("torusDistance") && webglCore.includes("marchScene") && webglCore.includes("sceneNormal")],
+  ["WebGL core supports mouse and device parallax", webglCore.includes("onPointerMove") && webglCore.includes("deviceorientation") && webglCore.includes("u_pointer")],
+  ["WebGL core opens the AI workspace", webglCore.includes("onActivate();") && desktop.includes('openWindow("ai")')],
+  ["WebGL fallback remains isolated from the live canvas", css.includes('.webgl-ai-core[data-renderer="webgl"] .webgl-ai-core-canvas') && css.includes('.webgl-ai-core[data-renderer="fallback"] .webgl-core-fallback')],
   ["system reduced-motion preference is supported", css.includes("@media (prefers-reduced-motion:reduce)")],
   ["forced-colors accessibility is supported", css.includes("@media (forced-colors:active)")],
   [
@@ -69,4 +77,4 @@ const failures = checks.filter(([, passed]) => !passed).map(([label]) => label);
 for (const [label, passed] of checks) console.log(`${passed ? "PASS" : "FAIL"} ${label}`);
 if (failures.length) throw new Error(`Interface quality validation failed: ${failures.join(", ")}`);
 
-console.log("PASS AZEZ premium interface quality and spatial 3D regression gate");
+console.log("PASS AZEZ premium interface quality, live WebGL, and spatial 3D regression gate");
