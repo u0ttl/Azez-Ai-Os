@@ -36,6 +36,12 @@ replaceOnce(
   "account workspace import",
 );
 replaceOnce(
+  `import { AccountWorkspace } from "@/components/auth-workspace";`,
+  `import { AccountWorkspace } from "@/components/auth-workspace";\nimport { HolographicAICore } from "@/components/holographic-ai-core";`,
+  `import { HolographicAICore } from "@/components/holographic-ai-core";`,
+  "WebGL holographic core import",
+);
+replaceOnce(
   `  | "home"\n  | "ai"`,
   `  | "home"\n  | "account"\n  | "ai"`,
   `  | "account"`,
@@ -77,6 +83,12 @@ replaceOnce(
   `className="owner-card" type="button" onClick={() => openWindow("account")}`,
   "owner account launcher",
 );
+replaceOnce(
+  `        <div className="holographic-scene" data-fallback="true"><div className="holo-grid" /><div className="holo-core"><span /><span /><span /></div></div>`,
+  `        <HolographicAICore onActivate={() => openWindow("ai")} label={lang === "ar" ? "فتح مساعد AZEZ ثلاثي الأبعاد" : "Open the AZEZ 3D assistant"} />`,
+  `<HolographicAICore onActivate={() => openWindow("ai")}`,
+  "interactive WebGL holographic core",
+);
 
 writeFileSync(desktopPath, desktop);
-console.log("Final AZEZ Desktop functionality and language patches are present.");
+console.log("Final AZEZ Desktop functionality, language, and WebGL holographic core patches are present.");
