@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   build:
-    name: Unified build, security, lint, unit tests, and visual review
+    name: Unified build, security, lint, unit tests, live WebGL, and visual review
     runs-on: ubuntu-latest
     timeout-minutes: 35
     services:
@@ -112,7 +112,7 @@ jobs:
       - name: Run web unit tests
         run: npx --yes pnpm@11.7.0 exec vitest run lib/api-client.spec.ts lib/operations.spec.ts lib/product.spec.ts
 
-      - name: Capture visual review snapshots
+      - name: Capture live WebGL and visual review snapshots
         id: visual
         shell: bash
         env:
@@ -153,6 +153,42 @@ jobs:
             exit 1
           fi
 
+          browser_flags=(
+            --headless=new
+            --no-sandbox
+            --disable-dev-shm-usage
+            --enable-webgl
+            --ignore-gpu-blocklist
+            --use-gl=angle
+            --use-angle=swiftshader
+            --enable-unsafe-swiftshader
+            --disable-background-networking
+            --disable-component-update
+            --disable-sync
+            --metrics-recording-only
+            --hide-scrollbars
+            --force-device-scale-factor=1
+            --run-all-compositor-stages-before-draw
+          )
+
+          verify_webgl() {
+            profile="$RUNNER_TEMP/chrome-webgl-verification"
+            rm -rf "$profile"
+            timeout 60s "$chrome" \
+              "${browser_flags[@]}" \
+              --window-size=1440,1000 \
+              --virtual-time-budget=10000 \
+              --user-data-dir="$profile" \
+              --dump-dom \
+              http://127.0.0.1:3100/ > visual-review/webgl-dom.html
+            if ! grep -q 'data-renderer="webgl"' visual-review/webgl-dom.html; then
+              echo "The holographic AI core did not reach the live WebGL renderer state." >&2
+              grep -o 'data-renderer="[^"]*"' visual-review/webgl-dom.html | head -10 || true
+              exit 1
+            fi
+            echo "PASS live WebGL holographic core rendered through SwiftShader."
+          }
+
           capture() {
             name="$1"
             size="$2"
@@ -160,23 +196,16 @@ jobs:
             profile="$RUNNER_TEMP/chrome-$name"
             rm -rf "$profile"
             timeout 60s "$chrome" \
-              --headless=new \
-              --no-sandbox \
-              --disable-gpu \
-              --disable-background-networking \
-              --disable-component-update \
-              --disable-sync \
-              --metrics-recording-only \
-              --hide-scrollbars \
-              --force-device-scale-factor=1 \
+              "${browser_flags[@]}" \
               --window-size="$size" \
-              --virtual-time-budget=6000 \
+              --virtual-time-budget=8000 \
               --user-data-dir="$profile" \
               --screenshot="visual-review/$name.png" \
               "http://127.0.0.1:3100$path"
             test -s "visual-review/$name.png"
           }
 
+          verify_webgl
           capture home-mobile 390,844 /
           capture home-wide-mobile 430,932 /
           capture login-mobile 390,844 /login
