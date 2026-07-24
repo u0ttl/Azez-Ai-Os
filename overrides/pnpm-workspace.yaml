@@ -19,6 +19,6 @@ onlyBuiltDependencies:
 
 overrides:
   postcss: 8.5.12
-  find-my-way: 9.6.1
+  find-my-way: 9.7.0
   '@hono/node-server': 1.19.13
   '@fastify/static': 9.1.1
