@@ -1,0 +1,140 @@
+  .system-window, .system-window.maximized {
+    inset:max(4px,env(safe-area-inset-top)) 4px max(4px,env(safe-area-inset-bottom));
+    width:auto;
+    height:auto;
+    max-width:none;
+    max-height:none;
+    min-width:0;
+    min-height:0;
+    border-radius:15px;
+    transform:none;
+  }
+  .window-toolbar { min-height:56px; height:56px; padding:6px 8px; }
+  .window-icon { width:36px; height:36px; }
+  .window-identity strong { font-size:12px; }
+  .window-identity small { display:block; max-width:44vw; font-size:9px; }
+  .window-controls { gap:4px; }
+  .window-controls button { width:38px; height:38px; min-width:38px; min-height:38px; }
+  .window-controls button:nth-child(2) { display:none; }
+  .desktop-module-host { height:calc(100% - 56px); min-height:0; overflow:auto; -webkit-overflow-scrolling:touch; }
+  .desktop-module-host .module-content, .desktop-module-host .security-page { padding:14px!important; }
+  .desktop-module-host .module-header h1 { font-size:22px; }
+  .desktop-module-host .module-header p { font-size:12px; }
+  .desktop-module-host button:not(.window-controls button) { min-height:44px; font-size:13px; }
+
+  .desktop-module-host > .auth-experience { height:100%!important; min-height:0!important; padding:8px!important; overflow-y:auto!important; }
+  .desktop-module-host .auth-shell { width:100%!important; min-height:0!important; height:auto!important; margin:0!important; border-radius:16px!important; overflow:visible!important; }
+  .desktop-module-host .auth-visual-panel { display:none!important; }
+  .desktop-module-host .auth-form-panel { padding:15px 13px 22px!important; justify-content:flex-start!important; overflow:visible!important; }
+  .desktop-module-host .auth-toolbar { margin-bottom:10px!important; }
+  .desktop-module-host .auth-heading h1 { font-size:27px!important; }
+  .desktop-module-host .auth-heading p { font-size:12px!important; margin-bottom:13px!important; }
+  .desktop-module-host .auth-form { gap:11px!important; }
+  .desktop-module-host .auth-form input { height:48px!important; min-height:48px!important; font-size:16px!important; }
+  .desktop-module-host .auth-field-row { grid-template-columns:1fr!important; gap:11px!important; }
+  .desktop-module-host .auth-mode-switch,
+  .desktop-module-host .account-kind-switch { margin-bottom:11px!important; }
+
+  .command-palette { top:auto; bottom:calc(86px + env(safe-area-inset-bottom)); width:calc(100vw - 16px); max-height:calc(100dvh - 166px); border-radius:18px; }
+  .command-palette > div { max-height:calc(100dvh - 230px); }
+  .appearance-backdrop { z-index:139; }
+  .appearance-panel {
+    top:auto;
+    inset-inline:8px;
+    bottom:calc(86px + env(safe-area-inset-bottom));
+    width:auto;
+    max-height:calc(100dvh - 166px);
+    border-radius:20px;
+    padding:14px;
+  }
+  .appearance-panel > header strong { font-size:16px; }
+  .appearance-panel > header small { font-size:10px; }
+  .accent-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .accent-option { min-height:46px; }
+}
+
+@media (max-width: 390px) {
+  .top-control { grid-template-columns:38px minmax(38px,1fr) repeat(4,38px); gap:4px; padding-inline:6px; }
+  .mobile-brand, .top-round, .language-toggle { width:38px; min-width:38px; height:38px; min-height:38px; }
+  .feature-grid { grid-template-columns:1fr; }
+  .feature-grid button { min-height:82px; }
+  .accent-grid { grid-template-columns:1fr; }
+}
+
+@media (max-height: 720px) and (min-width: 641px) {
+  .system-window { height:calc(100dvh - 16px); max-height:calc(100dvh - 16px); }
+  .desktop-module-host > .auth-experience { padding:10px!important; }
+  .desktop-module-host .auth-shell { min-height:0!important; }
+  .desktop-module-host .auth-visual-panel { display:none!important; }
+}
+
+html[data-reduced-motion="true"] *,
+.azez-desktop[data-reduced-motion="true"] *,
+.azez-desktop[data-reduced-motion="true"] *::before,
+.azez-desktop[data-reduced-motion="true"] *::after {
+  animation-duration:.01ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.01ms!important;
+  scroll-behavior:auto!important;
+}
+
+/* Readability floor for dense operational widgets and module metadata. */
+.left-status-panel small,
+.left-status-panel span,
+.left-status-panel p,
+.left-status-panel b { font-size:10px; line-height:1.45; }
+.left-status-panel em { font-size:9.5px; }
+.clock-block small { font-size:9px; }
+.terminal-widget > div { font-size:10px; line-height:1.5; }
+.agents-widget button > i,
+.database-widget button > i,
+.projects-widget button > i { font-size:9px; }
+.agents-widget button > span,
+.database-widget button > span,
+.projects-widget button > span { font-size:10px; }
+.agents-widget button > small,
+.database-widget button > small,
+.projects-widget button > span small { font-size:8.5px; line-height:1.35; }
+.monitoring-widget button strong,
+.monitoring-widget button small { font-size:9px; }
+.desktop-module-host .project-state,
+.desktop-module-host .priority,
+.desktop-module-host .workflow-item b,
+.desktop-module-host .current-plan,
+.desktop-module-host .activity-row > span { font-size:10px!important; }
+.desktop-module-host .lead-card select,
+.desktop-module-host .task-card footer select,
+.desktop-module-host .task-card > div button { font-size:12px!important; }
+
+/* Accent selection changes the active language across the shell, not only the picker. */
+.azez-desktop .nav-button.active .nav-glyph,
+.azez-desktop .window-icon,
+.azez-desktop .float-icon,
+.azez-desktop .command-orb > span,
+.azez-desktop .appearance-trigger.active { color:var(--az-accent); }
+.azez-desktop .center-dock button.active,
+.azez-desktop .top-round:hover,
+.azez-desktop .language-toggle:hover { border-color:color-mix(in srgb,var(--az-accent) 52%,transparent); background:var(--az-accent-soft); }
+.azez-desktop .floating-stack > button:hover,
+.azez-desktop .feature-grid button:hover { border-color:color-mix(in srgb,var(--az-accent) 48%,transparent); }
+
+@media (max-width: 880px) {
+  .system-window.maximized { left:8px; right:auto; width:calc(100vw - 16px); max-width:calc(100vw - 16px); }
+}
+
+@media (max-height: 720px) and (min-width: 641px) {
+  .system-window.maximized { left:8px!important; width:calc(100vw - 16px)!important; }
+  .desktop-module-host .auth-shell { grid-template-columns:1fr!important; max-width:680px!important; margin:auto!important; }
+  .desktop-module-host .auth-form-panel { padding:20px 24px 28px!important; }
+}
+
+.appearance-panel { overscroll-behavior:contain; }
+
+/* Standalone login/register routes remain usable at browser zoom and short laptop heights. */
+@media (max-height: 720px) and (min-width: 801px) {
+  body[data-page="auth"] { overflow:auto!important; }
+  .auth-page { grid-template-columns:1fr; min-height:100dvh; }
+  .auth-art { display:none!important; }
+  .auth-card { min-height:100dvh; padding:24px clamp(24px,8vw,84px) 34px; justify-content:flex-start; }
+  .auth-toolbar { margin-bottom:24px; }
+}

@@ -1,0 +1,34 @@
+/* AZEZ auth mobile performance profile */
+@media (max-width:800px), (hover:none) and (pointer:coarse){
+  body[data-page="auth"]{overflow-x:hidden!important;overscroll-behavior-y:contain;background:#07111c!important}
+  .auth-page{min-height:100dvh;contain:layout paint;background:var(--auth-bg)}
+  .auth-card{min-height:100dvh;padding:max(18px,env(safe-area-inset-top)) 18px max(28px,env(safe-area-inset-bottom));border:0;content-visibility:auto;contain-intrinsic-size:760px}
+  .auth-toolbar{margin-bottom:24px}
+  .auth-art{display:none!important}
+  .auth-form{gap:14px}
+  .auth-form input{min-height:50px;font-size:16px!important}
+  .auth-preference,.auth-submit,.auth-form input,.auth-form [role="group"] button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .auth-submit{box-shadow:0 8px 20px color-mix(in srgb,var(--auth-accent) 20%,transparent)}
+  .auth-copy h1{font-size:clamp(28px,8vw,34px)}
+  .auth-copy p{line-height:1.7;margin-bottom:20px}
+  .auth-experience{contain:layout paint;overflow-x:hidden;background:linear-gradient(155deg,var(--ab),color-mix(in srgb,var(--aa) 9%,var(--ab)))}
+  .auth-experience .auth-shell{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;box-shadow:0 12px 32px color-mix(in srgb,var(--ax) 62%,transparent)}
+  .auth-experience .auth-ambient:before,.auth-experience .auth-ambient i,.auth-experience .auth-ambient b,.auth-experience .auth-core,.auth-experience .auth-core:before,.auth-experience .auth-core:after,.auth-experience .auth-visual-panel:after,.auth-experience .tech-grid span{animation:none!important}
+  .auth-experience .auth-ambient i:nth-child(n+2),.auth-experience .auth-ambient b{display:none!important}
+  .auth-experience .auth-core{filter:none!important;opacity:.28!important}
+  .auth-experience .auth-visual-panel:after{display:none!important}
+  .auth-experience button,.auth-experience input{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .auth-experience input{font-size:16px!important}
+}
+@media (max-width:430px){
+  .auth-card{padding-inline:16px}
+  .auth-toolbar{gap:10px}
+  .auth-brand strong{font-size:14px}
+  .auth-preference{min-width:40px;padding-inline:9px}
+  .auth-copy h1{font-size:28px}
+  .auth-experience .auth-form-panel{padding-inline:16px!important}
+  .auth-experience .auth-visual-panel{min-height:150px!important;padding:17px!important}
+}
+@media (prefers-reduced-motion:reduce){
+  .auth-page *,.auth-page *:before,.auth-page *:after,.auth-experience *,.auth-experience *:before,.auth-experience *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}

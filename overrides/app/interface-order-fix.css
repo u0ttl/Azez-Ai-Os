@@ -1,0 +1,3 @@
+.azez-desktop>.desktop-noise,.azez-desktop>.left-sidebar,.azez-desktop>.left-status-panel,.azez-desktop>.top-control,.azez-desktop>.scene-shell,.azez-desktop>.right-console,.azez-desktop>.bottom-console,.azez-desktop>.command-orb{position:absolute}
+.azez-desktop>.system-window,.azez-desktop>.command-palette,.azez-desktop>.desktop-toast,.azez-desktop>.minimized-window{position:fixed}
+@media(max-width:640px){.azez-desktop>.right-console,.azez-desktop>.bottom-console,.azez-desktop>.left-status-panel{position:relative}.azez-desktop>.left-sidebar,.azez-desktop>.top-control,.azez-desktop>.system-window,.azez-desktop>.command-palette,.azez-desktop>.desktop-toast,.azez-desktop>.minimized-window{position:fixed}.azez-desktop>.scene-shell{position:relative}}

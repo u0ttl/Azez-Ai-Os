@@ -1,0 +1,69 @@
+/* AZEZ_MOBILE_VISUAL_REFINEMENTS
+   Final high-contrast details found by automated screenshot review. */
+@media (max-width:760px){
+  .azez-desktop .right-heading h2{
+    color:#f2f9fd!important;
+    opacity:1!important;
+    text-shadow:0 1px 18px rgba(56,220,255,.12)!important;
+  }
+  .azez-desktop[data-theme="light"] .right-heading h2{
+    color:#102536!important;
+    text-shadow:none!important;
+  }
+  .azez-desktop .right-heading span{
+    color:#a8bfcd!important;
+    opacity:1!important;
+  }
+  .azez-desktop[data-theme="light"] .right-heading span{color:#587184!important}
+
+  .azez-desktop .top-control .search-control{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+    direction:inherit!important;
+    color:#e8f5fb!important;
+  }
+  .azez-desktop .top-control .search-control .search-symbol{
+    display:inline-grid!important;
+    place-items:center!important;
+    flex:0 0 auto!important;
+    color:var(--az-accent,#38dcff)!important;
+    font-size:18px!important;
+  }
+  .azez-desktop .top-control .search-control>span:not(.search-symbol){
+    display:block!important;
+    min-width:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    color:#c6d9e4!important;
+    font-size:12px!important;
+    line-height:1.2!important;
+  }
+  .azez-desktop[data-theme="light"] .top-control .search-control>span:not(.search-symbol){color:#49677a!important}
+
+  .azez-desktop .top-control .appearance-trigger>span{display:none!important}
+  .azez-desktop .top-control .appearance-trigger::before{
+    content:"☼";
+    display:grid;
+    place-items:center;
+    width:100%;
+    height:100%;
+    color:var(--az-accent,#38dcff);
+    font-family:Arial,sans-serif;
+    font-size:20px;
+    line-height:1;
+  }
+  .azez-desktop[data-theme="light"] .top-control .appearance-trigger::before{content:"☾"}
+
+  .azez-desktop .left-sidebar{
+    max-width:calc(100vw - 16px)!important;
+  }
+  .azez-desktop .left-sidebar nav{
+    scroll-padding-inline:8px!important;
+  }
+  .azez-desktop .right-console{
+    margin-bottom:6px!important;
+  }
+}

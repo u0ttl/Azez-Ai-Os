@@ -1,0 +1,135 @@
+name: Deploy AZEZ Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azez-vercel-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview only
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_5kgZJGeh9LdWR2g6lCyVmXzO
+      VERCEL_PROJECT_ID: prj_c8W0NaokLkuTi1cVapuuDotOUt9Q
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Verify Vercel credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "::error::Repository secret VERCEL_TOKEN is missing."
+            exit 1
+          fi
+
+      - name: Link exact Vercel project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          cat > .vercel/project.json <<'JSON'
+          {
+            "orgId": "team_5kgZJGeh9LdWR2g6lCyVmXzO",
+            "projectId": "prj_c8W0NaokLkuTi1cVapuuDotOUt9Q",
+            "projectName": "azez-ai-os"
+          }
+          JSON
+
+      - name: Deploy Preview
+        id: deploy
+        shell: bash
+        run: |
+          set +e
+          npx --yes vercel@latest deploy --yes --archive=tgz --token "$VERCEL_TOKEN" > preview-url.txt 2> deploy-error.txt
+          status=$?
+          cat deploy-error.txt
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Vercel preview deployment failed with exit code $status."
+            exit "$status"
+          fi
+          url="$(tail -n 1 preview-url.txt | tr -d '\r')"
+          printf '%s\n' "$url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Preview routes
+        shell: bash
+        run: |
+          set -uo pipefail
+          url="${{ steps.deploy.outputs.url }}"
+          : > route-status.txt
+          failed=0
+
+          verify_route() {
+            label="$1"
+            path="$2"
+            response_file="${label}.response"
+            error_file="${label}.error"
+
+            set +e
+            npx --yes vercel@latest curl "$path" \
+              --deployment "$url" \
+              --silent --show-error --location \
+              --write-out $'\n__HTTP_STATUS__:%{http_code}\n' \
+              > "$response_file" 2> "$error_file"
+            command_status=$?
+            set -e
+
+            http_status="$(sed -n 's/^__HTTP_STATUS__://p' "$response_file" | tail -n 1 | tr -d '\r')"
+            printf '%s path=%s command_status=%s http_status=%s\n' "$label" "$path" "$command_status" "${http_status:-missing}" | tee -a route-status.txt
+
+            if [ "$command_status" -ne 0 ] || [ "$http_status" != "200" ]; then
+              failed=1
+              echo "--- ${label} stderr ---" | tee -a route-status.txt
+              cat "$error_file" | tee -a route-status.txt
+              echo "--- ${label} response tail ---" | tee -a route-status.txt
+              tail -n 40 "$response_file" | tee -a route-status.txt
+            fi
+          }
+
+          verify_route home /
+          verify_route login /login
+          verify_route register /register
+          verify_route health /api/v1/health
+          verify_route ready /api/v1/health/ready
+
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::One or more Preview routes failed verification."
+            exit 1
+          fi
+
+      - name: Upload Preview result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-vercel-preview-result
+          path: |
+            preview-url.txt
+            deploy-error.txt
+            route-status.txt
+            *.response
+            *.error
+          if-no-files-found: warn
+          retention-days: 7

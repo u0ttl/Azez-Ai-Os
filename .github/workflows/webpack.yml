@@ -1,28 +1,230 @@
-name: NodeJS with Webpack
+name: AZEZ AI OS Preview CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - launch-hardening-0.12.0
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azez-preview-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Unified build, security, lint, unit tests, live WebGL, and visual review
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x, 22.x]
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: azez
+          POSTGRES_USER: azez
+          POSTGRES_PASSWORD: azez
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U azez -d azez"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
 
-    - name: Build
-      run: |
-        npm install
-        npx webpack
+      - name: Verify bootstrap inputs
+        run: |
+          test -f package.json
+          test -f Azez_AI_OS_v0.11.0_Signed.zip
+          test -f scripts/vercel-bootstrap.mjs
+          test -f scripts/vercel-unified-build.mjs
+          test -f scripts/validate-interface-layout.mjs
+
+      - name: Build AZEZ AI OS 0.12.0
+        env:
+          CI: "true"
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+
+      - name: Validate desktop and phone interface
+        run: node scripts/validate-interface-layout.mjs
+
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-preview-build-log
+          path: build.log
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Audit production dependencies
+        id: audit
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx --yes pnpm@11.7.0 audit --prod --audit-level=moderate 2>&1 | tee audit.log
+
+      - name: Upload security diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-preview-audit-log
+          path: audit.log
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Lint web application
+        run: |
+          set -o pipefail
+          npx --yes pnpm@11.7.0 exec eslint app components lib --ignore-pattern 'app/api/v1/**' --max-warnings=0 2>&1 | tee lint-web.log
+
+      - name: Upload web lint diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-preview-web-lint-log
+          path: lint-web.log
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Lint API application
+        run: npx --yes pnpm@11.7.0 --filter @azez/api lint
+
+      - name: Run API unit tests
+        run: npx --yes pnpm@11.7.0 --filter @azez/api test
+
+      - name: Run web unit tests
+        run: npx --yes pnpm@11.7.0 exec vitest run lib/api-client.spec.ts lib/operations.spec.ts lib/product.spec.ts
+
+      - name: Capture live WebGL and visual review snapshots
+        id: visual
+        shell: bash
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          DATABASE_URL: "postgresql://azez:azez@127.0.0.1:5432/azez?sslmode=disable"
+          SESSION_SECRET: "azez-visual-review-session-secret-2026-only"
+          REDIS_REQUIRED: "false"
+          MALWARE_SCAN_REQUIRED: "false"
+        run: |
+          set -euo pipefail
+          mkdir -p visual-review
+          node --input-type=module -e 'import pg from "pg"; const client = new pg.Client({ connectionString: process.env.DATABASE_URL }); await client.connect(); await client.query("CREATE EXTENSION IF NOT EXISTS vector"); await client.end();'
+          npx --yes pnpm@11.7.0 --filter @azez/database exec prisma db push
+          ALLOW_DEMO_SEED=true NODE_ENV=test DEMO_EMAIL=visual-review@example.test DEMO_PASSWORD='VisualReview!2026#Safe' npx --yes pnpm@11.7.0 --filter @azez/database seed
+          npx --yes pnpm@11.7.0 exec next start -p 3100 > visual-review/server.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:3100/ > /dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Local Next.js server did not become ready." >&2
+            exit 1
+          fi
+
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$chrome" ]; then
+            echo "No Chromium-compatible browser is available on the runner." >&2
+            exit 1
+          fi
+
+          browser_flags=(
+            --headless=new
+            --no-sandbox
+            --disable-dev-shm-usage
+            --enable-webgl
+            --ignore-gpu-blocklist
+            --use-gl=angle
+            --use-angle=swiftshader
+            --enable-unsafe-swiftshader
+            --disable-background-networking
+            --disable-component-update
+            --disable-sync
+            --metrics-recording-only
+            --hide-scrollbars
+            --force-device-scale-factor=1
+            --run-all-compositor-stages-before-draw
+          )
+
+          verify_webgl() {
+            profile="$RUNNER_TEMP/chrome-webgl-verification"
+            rm -rf "$profile"
+            timeout 60s "$chrome" \
+              "${browser_flags[@]}" \
+              --window-size=1440,1000 \
+              --virtual-time-budget=10000 \
+              --user-data-dir="$profile" \
+              --dump-dom \
+              http://127.0.0.1:3100/ > visual-review/webgl-dom.html
+            if ! grep -q 'data-renderer="webgl"' visual-review/webgl-dom.html; then
+              echo "The holographic AI core did not reach the live WebGL renderer state." >&2
+              grep -o 'data-renderer="[^"]*"' visual-review/webgl-dom.html | head -10 || true
+              exit 1
+            fi
+            echo "PASS live WebGL holographic core rendered through SwiftShader."
+          }
+
+          capture() {
+            name="$1"
+            size="$2"
+            path="$3"
+            profile="$RUNNER_TEMP/chrome-$name"
+            rm -rf "$profile"
+            timeout 60s "$chrome" \
+              "${browser_flags[@]}" \
+              --window-size="$size" \
+              --virtual-time-budget=8000 \
+              --user-data-dir="$profile" \
+              --screenshot="visual-review/$name.png" \
+              "http://127.0.0.1:3100$path"
+            test -s "visual-review/$name.png"
+          }
+
+          verify_webgl
+          capture home-mobile 390,844 /
+          capture home-wide-mobile 430,932 /
+          capture login-mobile 390,844 /login
+          capture register-mobile 390,844 /register
+          capture home-desktop 1440,1000 /
+          capture appearance-mobile 390,844 '/?visual-review=appearance'
+          node scripts/capture-authenticated-visual-review.mjs "$chrome" http://localhost:3100 visual-review
+
+      - name: Upload visual review snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-interface-visual-review
+          path: visual-review
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Enforce security gate
+        if: steps.audit.outcome == 'failure'
+        run: |
+          echo "Production dependency audit failed. Review azez-preview-audit-log."
+          exit 1
