@@ -12,6 +12,8 @@ const premiumPath = join(root, "app", "premium-agency-pass.css");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
 const cohesionPath = join(root, "app", "premium-cohesion-fix.css");
 const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
+const spatial3dPath = join(root, "app", "spatial-3d-repair.css");
+const spatial3dMarker = "/* AZEZ_SPATIAL_3D_REPAIR */";
 
 let globals = readFileSync(globalsPath, "utf8");
 globals = globals
@@ -44,13 +46,15 @@ function refreshFinalLayer(path, layerMarker) {
 refreshFinalLayer(visualQaPath, visualQaMarker);
 refreshFinalLayer(premiumPath, premiumMarker);
 refreshFinalLayer(cohesionPath, cohesionMarker);
+refreshFinalLayer(spatial3dPath, spatial3dMarker);
 
 if (
+  globals.lastIndexOf(spatial3dMarker) < globals.lastIndexOf(cohesionMarker) ||
   globals.lastIndexOf(cohesionMarker) < globals.lastIndexOf(premiumMarker) ||
   globals.lastIndexOf(premiumMarker) < globals.lastIndexOf(visualQaMarker)
 ) {
-  throw new Error("Premium cohesion must be the final stylesheet layer after visual QA and agency refinement.");
+  throw new Error("Spatial 3D repair must be the final stylesheet layer after cohesion, premium, and visual QA.");
 }
 
 writeFileSync(globalsPath, globals);
-console.log("Finalized AZEZ interface quality, visual QA, premium agency, and cohesion layers.");
+console.log("Finalized AZEZ interface quality, visual QA, premium agency, cohesion, and spatial 3D repair layers.");
