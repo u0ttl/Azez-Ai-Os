@@ -92,3 +92,59 @@ replaceOnce(
 
 writeFileSync(desktopPath, desktop);
 console.log("Final AZEZ Desktop functionality, language, and WebGL holographic core patches are present.");
+
+const webglCorePath = join(process.cwd(), "components", "holographic-ai-core.tsx");
+let webglCore = readFileSync(webglCorePath, "utf8");
+
+function replaceWebglOnce(before, after, marker, label) {
+  if (webglCore.includes(marker)) return;
+  if (!webglCore.includes(before)) throw new Error(`WebGL core patch target missing: ${label}`);
+  webglCore = webglCore.replace(before, after);
+  console.log(`Applied WebGL core patch: ${label}.`);
+}
+
+replaceWebglOnce(
+  `    const gl = (canvas.getContext("webgl2", contextOptions) ?? canvas.getContext("webgl", contextOptions)) as WebGLRenderingContext | null;`,
+  `    const gl = (canvas.getContext("webgl", contextOptions) ?? canvas.getContext("webgl2", contextOptions)) as WebGLRenderingContext | null;`,
+  `canvas.getContext("webgl", contextOptions) ?? canvas.getContext("webgl2"`,
+  "prefer GLSL-compatible WebGL 1 context",
+);
+replaceWebglOnce(
+  `  vec2 grid = abs(fract(point.xz * 0.68) - 0.5) / max(fwidth(point.xz * 0.68), vec2(0.002));\n  float line = 1.0 - min(min(grid.x, grid.y), 1.0);`,
+  `  vec2 grid = abs(fract(point.xz * 0.68) - 0.5);\n  float nearestLine = min(grid.x, grid.y);\n  float line = 1.0 - smoothstep(0.015, 0.045, nearestLine);`,
+  `float nearestLine = min(grid.x, grid.y);`,
+  "portable grid shader without derivative extension",
+);
+replaceWebglOnce(
+  `      const render = (timestamp: number) => {`,
+  `      let hasPresentedFrame = false;\n      const render = (timestamp: number) => {`,
+  `let hasPresentedFrame = false;`,
+  "track first presented WebGL frame",
+);
+replaceWebglOnce(
+  `        gl.drawArrays(gl.TRIANGLES, 0, 3);\n        animationFrame = window.requestAnimationFrame(render);`,
+  `        gl.drawArrays(gl.TRIANGLES, 0, 3);\n        if (!hasPresentedFrame) {\n          hasPresentedFrame = true;\n          setRenderer("webgl");\n        }\n        animationFrame = window.requestAnimationFrame(render);`,
+  `if (!hasPresentedFrame) {`,
+  "publish renderer state from the animation callback",
+);
+replaceWebglOnce(
+  `      setRenderer("webgl");\n      animationFrame = window.requestAnimationFrame(render);`,
+  `      animationFrame = window.requestAnimationFrame(render);`,
+  `hasPresentedFrame = true;\n          setRenderer("webgl");`,
+  "remove synchronous renderer state update",
+);
+replaceWebglOnce(
+  `    if (!gl) {\n      setRenderer("fallback");\n      return;\n    }`,
+  `    if (!gl) {\n      window.requestAnimationFrame(() => setRenderer("fallback"));\n      return;\n    }`,
+  `window.requestAnimationFrame(() => setRenderer("fallback"));`,
+  "defer unavailable-context fallback state",
+);
+replaceWebglOnce(
+  `      console.warn("AZEZ holographic WebGL core fell back to CSS rendering.", error);\n      setRenderer("fallback");`,
+  `      console.warn("AZEZ holographic WebGL core fell back to CSS rendering.", error);\n      window.requestAnimationFrame(() => setRenderer("fallback"));`,
+  `console.warn("AZEZ holographic WebGL core fell back to CSS rendering.", error);\n      window.requestAnimationFrame`,
+  "defer shader-error fallback state",
+);
+
+writeFileSync(webglCorePath, webglCore);
+console.log("Final WebGL core lint, compatibility, and first-frame patches are present.");
