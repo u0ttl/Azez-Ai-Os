@@ -10,6 +10,8 @@ const visualQaPath = join(root, "app", "visual-qa-final.css");
 const visualQaMarker = "/* AZEZ_VISUAL_QA_FINAL */";
 const premiumPath = join(root, "app", "premium-agency-pass.css");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
+const cohesionPath = join(root, "app", "premium-cohesion-fix.css");
+const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
 
 let globals = readFileSync(globalsPath, "utf8");
 globals = globals
@@ -29,25 +31,26 @@ if (!globals.includes(marker)) {
   globals += `\n\n${polish.slice(qualityStart)}\n`;
 }
 
-const visualQa = readFileSync(visualQaPath, "utf8");
-const existingVisualQa = globals.indexOf(visualQaMarker);
-if (existingVisualQa >= 0) {
-  globals = `${globals.slice(0, existingVisualQa).trimEnd()}\n\n${visualQa}\n`;
-} else {
-  globals += `\n\n${visualQa}\n`;
+function refreshFinalLayer(path, layerMarker) {
+  const layer = readFileSync(path, "utf8");
+  const existing = globals.indexOf(layerMarker);
+  if (existing >= 0) {
+    globals = `${globals.slice(0, existing).trimEnd()}\n\n${layer}\n`;
+  } else {
+    globals += `\n\n${layer}\n`;
+  }
 }
 
-const premium = readFileSync(premiumPath, "utf8");
-const existingPremium = globals.indexOf(premiumMarker);
-if (existingPremium >= 0) {
-  globals = `${globals.slice(0, existingPremium).trimEnd()}\n\n${premium}\n`;
-} else {
-  globals += `\n\n${premium}\n`;
-}
+refreshFinalLayer(visualQaPath, visualQaMarker);
+refreshFinalLayer(premiumPath, premiumMarker);
+refreshFinalLayer(cohesionPath, cohesionMarker);
 
-if (globals.lastIndexOf(premiumMarker) < globals.lastIndexOf(visualQaMarker)) {
-  throw new Error("Premium agency pass must be the final stylesheet layer.");
+if (
+  globals.lastIndexOf(cohesionMarker) < globals.lastIndexOf(premiumMarker) ||
+  globals.lastIndexOf(premiumMarker) < globals.lastIndexOf(visualQaMarker)
+) {
+  throw new Error("Premium cohesion must be the final stylesheet layer after visual QA and agency refinement.");
 }
 
 writeFileSync(globalsPath, globals);
-console.log("Finalized AZEZ interface quality, visual QA, and premium agency refinement layers.");
+console.log("Finalized AZEZ interface quality, visual QA, premium agency, and cohesion layers.");
