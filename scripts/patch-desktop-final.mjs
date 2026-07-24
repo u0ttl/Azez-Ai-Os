@@ -127,12 +127,19 @@ replaceWebglOnce(
   `if (!hasPresentedFrame) {`,
   "publish renderer state from the animation callback",
 );
-replaceWebglOnce(
-  `      setRenderer("webgl");\n      animationFrame = window.requestAnimationFrame(render);`,
-  `      animationFrame = window.requestAnimationFrame(render);`,
-  `hasPresentedFrame = true;\n          setRenderer("webgl");`,
-  "remove synchronous renderer state update",
-);
+
+const synchronousRendererState = `      setRenderer("webgl");\n      animationFrame = window.requestAnimationFrame(render);`;
+if (webglCore.includes(synchronousRendererState)) {
+  webglCore = webglCore.replace(
+    synchronousRendererState,
+    `      animationFrame = window.requestAnimationFrame(render);`,
+  );
+  console.log("Applied WebGL core patch: remove synchronous renderer state update.");
+}
+if (webglCore.includes(synchronousRendererState)) {
+  throw new Error("WebGL core still contains a synchronous setRenderer call in the effect body.");
+}
+
 replaceWebglOnce(
   `    if (!gl) {\n      setRenderer("fallback");\n      return;\n    }`,
   `    if (!gl) {\n      window.requestAnimationFrame(() => setRenderer("fallback"));\n      return;\n    }`,
