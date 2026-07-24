@@ -1,0 +1,54 @@
+/* AZEZ_SPATIAL_3D_REPAIR */
+
+/* Restore the authored desktop positioning and z-depth after the premium shell layer. */
+.azez-desktop::after{z-index:0!important}
+.azez-desktop>.desktop-noise{position:absolute!important;z-index:100!important}
+.azez-desktop>.left-sidebar{position:absolute!important;z-index:20!important}
+.azez-desktop>.left-status-panel{position:absolute!important;z-index:21!important}
+.azez-desktop>.top-control{position:absolute!important;z-index:30!important}
+.azez-desktop>.scene-shell{position:absolute!important;z-index:1!important}
+.azez-desktop>.right-console{position:absolute!important;z-index:20!important}
+.azez-desktop>.bottom-console{position:absolute!important;z-index:23!important}
+.azez-desktop>.command-orb{position:absolute!important;z-index:24!important}
+.azez-desktop>.system-window{position:fixed!important;z-index:120!important}
+.azez-desktop>.minimized-window{position:fixed!important;z-index:121!important}
+.azez-desktop>.command-palette{position:fixed!important;z-index:130!important}
+.azez-desktop>.desktop-toast{position:fixed!important;z-index:140!important}
+
+/* Rebuild the spatial rendering context without intercepting application input. */
+.azez-desktop .scene-shell{perspective:1200px!important;perspective-origin:50% 42%!important}
+.azez-desktop .holographic-scene{perspective:900px!important;perspective-origin:50% 45%!important}
+.azez-desktop .holo-grid{transform:perspective(500px) rotateX(62deg)!important;transform-origin:center top!important;will-change:transform!important}
+.azez-desktop .holo-core{transform-style:preserve-3d!important;will-change:transform!important}
+.azez-desktop .holo-core span{backface-visibility:hidden!important;animation-play-state:running;will-change:transform,opacity!important}
+.azez-desktop .floating-stack{perspective:900px!important;transform-style:preserve-3d!important}
+.azez-desktop .floating-stack>button,.azez-desktop .feature-grid button{transform-style:preserve-3d!important;backface-visibility:hidden!important;will-change:transform!important}
+.azez-desktop .floating-stack>button{transform:translate3d(0,0,0)!important}
+.azez-desktop .core-copy .azez-mark{transform:perspective(700px) rotateX(6deg) rotateY(-8deg) rotateZ(5deg) translateZ(14px)!important;transform-style:preserve-3d!important;backface-visibility:hidden!important;will-change:transform!important}
+
+/* Touch devices keep the holographic motion; only expensive blur is disabled elsewhere. */
+@media (hover:none) and (pointer:coarse){
+  .azez-desktop .holo-core span:nth-child(1){animation-duration:12s!important;animation-iteration-count:infinite!important}
+  .azez-desktop .holo-core span:nth-child(2){animation-duration:8s!important;animation-iteration-count:infinite!important}
+  .azez-desktop .holo-core span:nth-child(3){animation-duration:2.5s!important;animation-iteration-count:infinite!important}
+}
+
+@media (hover:hover) and (pointer:fine){
+  .azez-desktop .floating-stack>button:hover{transform:translate3d(0,-3px,18px) scale(1.015)!important}
+  .azez-desktop .feature-grid button:hover{transform:translate3d(0,-3px,12px) scale(1.01)!important}
+  .azez-desktop .floating-stack>button:active,.azez-desktop .feature-grid button:active{transform:translate3d(0,0,4px) scale(.985)!important}
+}
+
+@media (max-width:760px){
+  .azez-desktop>.scene-shell{position:relative!important;z-index:1!important}
+  .azez-desktop>.right-console,.azez-desktop>.bottom-console,.azez-desktop>.left-status-panel{position:relative!important;z-index:2!important}
+  .azez-desktop>.left-sidebar,.azez-desktop>.top-control,.azez-desktop>.system-window,.azez-desktop>.command-palette,.azez-desktop>.desktop-toast,.azez-desktop>.minimized-window{position:fixed!important}
+  .azez-desktop .scene-shell{perspective:900px!important}
+  .azez-desktop .holographic-scene{perspective:720px!important}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .azez-desktop .holo-grid{transform:perspective(500px) rotateX(62deg)!important}
+  .azez-desktop .floating-stack>button{transform:translate3d(0,0,0)!important}
+  .azez-desktop .core-copy .azez-mark{transform:perspective(700px) rotateX(6deg) rotateY(-8deg) rotateZ(5deg) translateZ(14px)!important}
+}
