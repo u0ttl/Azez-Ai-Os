@@ -8,6 +8,8 @@ const polishPath = join(root, "app", "interface-polish.css");
 const marker = "/* AZEZ_INTERFACE_QUALITY_V2 */";
 const visualQaPath = join(root, "app", "visual-qa-final.css");
 const visualQaMarker = "/* AZEZ_VISUAL_QA_FINAL */";
+const premiumPath = join(root, "app", "premium-agency-pass.css");
+const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
 
 let globals = readFileSync(globalsPath, "utf8");
 globals = globals
@@ -30,13 +32,22 @@ if (!globals.includes(marker)) {
 const visualQa = readFileSync(visualQaPath, "utf8");
 const existingVisualQa = globals.indexOf(visualQaMarker);
 if (existingVisualQa >= 0) {
-  // The generated workspace can be finalized more than once locally. Refresh
-  // the terminal QA layer so a later correction is never hidden by an older
-  // marker-bearing copy.
   globals = `${globals.slice(0, existingVisualQa).trimEnd()}\n\n${visualQa}\n`;
 } else {
   globals += `\n\n${visualQa}\n`;
 }
 
+const premium = readFileSync(premiumPath, "utf8");
+const existingPremium = globals.indexOf(premiumMarker);
+if (existingPremium >= 0) {
+  globals = `${globals.slice(0, existingPremium).trimEnd()}\n\n${premium}\n`;
+} else {
+  globals += `\n\n${premium}\n`;
+}
+
+if (globals.lastIndexOf(premiumMarker) < globals.lastIndexOf(visualQaMarker)) {
+  throw new Error("Premium agency pass must be the final stylesheet layer.");
+}
+
 writeFileSync(globalsPath, globals);
-console.log("Finalized AZEZ interface quality v2 and visual QA fixes in generated global styles.");
+console.log("Finalized AZEZ interface quality, visual QA, and premium agency refinement layers.");
