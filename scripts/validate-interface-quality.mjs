@@ -12,6 +12,7 @@ const css = read("app/globals.css");
 const layout = read("app/layout.tsx");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
 const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
+const spatial3dMarker = "/* AZEZ_SPATIAL_3D_REPAIR */";
 const visualQaMarker = "/* AZEZ_VISUAL_QA_FINAL */";
 
 const checks = [
@@ -20,8 +21,9 @@ const checks = [
   ["quality v2 stylesheet is applied", css.includes("/* AZEZ_INTERFACE_QUALITY_V2 */")],
   ["final visual QA stylesheet is applied", css.includes(visualQaMarker)],
   [
-    "premium cohesion layer is applied last",
-    css.includes(cohesionMarker) &&
+    "spatial 3D repair layer is applied last",
+    css.includes(spatial3dMarker) &&
+      css.lastIndexOf(spatial3dMarker) > css.lastIndexOf(cohesionMarker) &&
       css.lastIndexOf(cohesionMarker) > css.lastIndexOf(premiumMarker) &&
       css.lastIndexOf(premiumMarker) > css.lastIndexOf(visualQaMarker),
   ],
@@ -50,6 +52,10 @@ const checks = [
   ["mobile scene uses a bounded premium composition", css.includes("height:min(430px,calc(100dvh - 208px))!important") && css.includes("border-radius:22px!important")],
   ["authentication avoids generic purple primary actions", css.includes("linear-gradient(115deg,#086f92,#0c9aba)!important")],
   ["premium interactions use transform-based motion", css.includes("cubic-bezier(.2,.8,.2,1)") && !css.includes("transition:top") && !css.includes("transition:left")],
+  ["spatial scene retains perspective geometry", css.includes("perspective:1200px!important") && css.includes("transform:perspective(500px) rotateX(62deg)!important")],
+  ["spatial cards preserve 3D transforms", css.includes("transform-style:preserve-3d!important") && css.includes("translate3d(0,-3px,18px)")],
+  ["authored desktop z-depth is restored", css.includes(".azez-desktop>.scene-shell{position:absolute!important;z-index:1!important}") && css.includes(".azez-desktop>.system-window{position:fixed!important;z-index:120!important}")],
+  ["touch devices retain holographic animation", css.includes("@media (hover:none) and (pointer:coarse)") && css.includes("animation-duration:12s!important") && css.includes("animation-iteration-count:infinite!important")],
   ["system reduced-motion preference is supported", css.includes("@media (prefers-reduced-motion:reduce)")],
   ["forced-colors accessibility is supported", css.includes("@media (forced-colors:active)")],
   [
@@ -63,4 +69,4 @@ const failures = checks.filter(([, passed]) => !passed).map(([label]) => label);
 for (const [label, passed] of checks) console.log(`${passed ? "PASS" : "FAIL"} ${label}`);
 if (failures.length) throw new Error(`Interface quality validation failed: ${failures.join(", ")}`);
 
-console.log("PASS AZEZ premium interface quality regression gate");
+console.log("PASS AZEZ premium interface quality and spatial 3D regression gate");
