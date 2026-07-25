@@ -18,9 +18,9 @@ cleanup() {
   set +e
   if command -v psql >/dev/null 2>&1; then
     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v e2e_email="$email" <<'SQL' >/dev/null
-CREATE TEMP TABLE e2e_users ON COMMIT DROP AS
+CREATE TEMP TABLE e2e_users AS
 SELECT id FROM public.users WHERE email = :'e2e_email';
-CREATE TEMP TABLE e2e_organizations ON COMMIT DROP AS
+CREATE TEMP TABLE e2e_organizations AS
 SELECT organization_id AS id FROM public.memberships WHERE user_id IN (SELECT id FROM e2e_users);
 DELETE FROM public.file_objects
 WHERE split_part(storage_key, '/', 1) IN (SELECT id::text FROM e2e_organizations);
@@ -127,7 +127,7 @@ conversation_json="$(request_json ai_conversation POST "/api/v1/organizations/${
 conversation_id="$(jq -er '.id' <<<"$conversation_json")"
 ai_message_json="$(request_json ai_message POST "/api/v1/organizations/${organization_id}/ai/conversations/${conversation_id}/messages" "$(jq -nc --arg baseId "$base_id" '{content:"ما رمز التحقق الداخلي؟",knowledgeBaseId:$baseId}')")"
 jq -e '.role == "ASSISTANT" and (.content | length) > 0 and (.provider | length) > 0' <<<"$ai_message_json" >/dev/null
-if [[ "${AI_REQUIRED:-false}" == "true" ]]; then
+if [[ "$ai_provider" != "local-retrieval" || "${AI_REQUIRED:-false}" == "true" ]]; then
   jq -e '.provider != "local-retrieval" and .provider != "local-fallback"' <<<"$ai_message_json" >/dev/null
 fi
 
@@ -174,6 +174,11 @@ request_json login POST /api/v1/auth/login "$(jq -nc --arg email "$email" --arg 
 request_json me_after_login GET /api/v1/auth/me >/dev/null
 
 email_status="$(psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 -v e2e_email="$email" -c "select status::text from public.email_outbox where recipient = :'e2e_email' order by created_at desc limit 1")"
+if [[ -n "${SMTP_HOST:-}" || "${EMAIL_REQUIRED:-false}" == "true" ]]; then
+  [[ "$email_status" == "SENT" ]]
+else
+  [[ "$email_status" == "PENDING" || "$email_status" == "SENT" ]]
+fi
 health_json="$(request_json final_ready GET /api/v1/health/ready)"
 jq -e '.status == "ready" and .checks.database.status == "up" and .checks.storage.status == "up"' <<<"$health_json" >/dev/null
 
