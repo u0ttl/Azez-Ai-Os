@@ -4,10 +4,11 @@ import { EmailModule } from "../email/email.module.js";
 import { FilesModule } from "../files/files.module.js";
 import { HealthController } from "./health.controller.js";
 import { HealthService } from "./health.service.js";
+import { PreviewMaintenanceController } from "./preview-maintenance.controller.js";
 
 @Module({
   imports: [FilesModule, EmailModule, AIModule],
-  controllers: [HealthController],
+  controllers: [HealthController, PreviewMaintenanceController],
   providers: [HealthService],
 })
 export class HealthModule {}
