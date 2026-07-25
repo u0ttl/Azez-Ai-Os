@@ -137,11 +137,13 @@ export class ObjectStorageService {
   }
 
   private ensureFallbackTable(): Promise<void> {
-    this.fallbackReady ??= this.database.client.$queryRaw<StorageTableRow[]>`
+    if (this.fallbackReady) return this.fallbackReady;
+    const ready: Promise<void> = this.database.client.$queryRaw<StorageTableRow[]>`
       SELECT to_regclass('public.file_objects')::text AS "tableName"
-    `.then((rows) => {
+    `.then((rows: StorageTableRow[]) => {
       if (!rows[0]?.tableName) throw new Error("FILE_STORAGE_TABLE_MISSING");
     });
-    return this.fallbackReady;
+    this.fallbackReady = ready;
+    return ready;
   }
 }
