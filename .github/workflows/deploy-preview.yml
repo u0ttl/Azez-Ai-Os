@@ -32,6 +32,24 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
 
+      - name: Prepare complete tracked project source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p complete-source
+          git archive HEAD | tar -x -C complete-source
+          printf '%s\n' "${GITHUB_SHA}" > complete-source/SOURCE_COMMIT.txt
+          printf '%s\n' "${GITHUB_HEAD_REF:-repair/production-readiness-2026-07-25}" > complete-source/SOURCE_BRANCH.txt
+
+      - name: Upload complete project source
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-ai-os-complete-source
+          path: complete-source
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
+
       - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
