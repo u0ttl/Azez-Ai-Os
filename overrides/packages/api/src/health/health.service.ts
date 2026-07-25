@@ -57,7 +57,12 @@ export class HealthService {
 
     const redisStartedAt = performance.now();
     const redisStatus = await this.redis.ping();
-    const redis = { status: redisStatus, required: this.redis.isRequired(), latencyMs: Math.round(performance.now() - redisStartedAt) };
+    const redis = {
+      status: redisStatus,
+      mode: this.redis.mode(),
+      required: this.redis.isRequired(),
+      latencyMs: Math.round(performance.now() - redisStartedAt),
+    };
 
     const scannerStartedAt = performance.now();
     const scannerStatus = await this.scanner.ping();
