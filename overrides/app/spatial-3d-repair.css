@@ -70,3 +70,43 @@
   .azez-desktop .core-copy .azez-mark{transform:perspective(700px) rotateX(6deg) rotateY(-8deg) rotateZ(5deg) translateZ(14px)!important}
   .azez-desktop .webgl-ai-core-canvas,.azez-desktop .webgl-core-fallback{transition:none!important}
 }
+
+/* AZEZ_REGISTER_PERFORMANCE: registration prioritizes the form over decoration. */
+.auth-page--register{
+  grid-template-columns:minmax(0,720px)!important;
+  justify-content:center;
+  background:var(--auth-bg)!important;
+}
+.auth-page--register .auth-card{
+  width:100%;
+  min-height:100dvh;
+  border-inline-end:0!important;
+  box-shadow:none!important;
+}
+
+@media (max-width:800px),(hover:none) and (pointer:coarse){
+  .auth-page--register{
+    display:block!important;
+    min-height:100dvh!important;
+    contain:layout paint!important;
+  }
+  .auth-page--register .auth-card{
+    min-height:100dvh!important;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))!important;
+    justify-content:flex-start!important;
+    contain:layout paint!important;
+    content-visibility:visible!important;
+  }
+  .auth-page--register .auth-toolbar{margin-bottom:18px!important}
+  .auth-page--register .auth-copy h1{font-size:28px!important;margin-block:3px 8px!important}
+  .auth-page--register .auth-copy p{font-size:13px!important;line-height:1.55!important;margin-bottom:16px!important}
+  .auth-page--register .auth-form{gap:12px!important}
+  .auth-page--register .auth-form input{min-height:48px!important}
+  .auth-page--register .auth-submit{min-height:50px!important;margin-top:2px!important;box-shadow:none!important}
+  .auth-page--register .auth-brand .brand-mark,
+  .auth-page--register .account-type-button,
+  .auth-page--register .auth-preference{box-shadow:none!important;filter:none!important}
+  .auth-page--register *,
+  .auth-page--register *::before,
+  .auth-page--register *::after{animation:none!important;transition:none!important}
+}
