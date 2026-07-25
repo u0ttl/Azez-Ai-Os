@@ -9,9 +9,9 @@ import { AuthService, SessionResult } from "./auth.service.js";
 import { AuthenticatedRequest, RequestMetadata } from "./auth.types.js";
 import { Public } from "./public.decorator.js";
 
-interface RegisterResponse extends SessionResult["user"] {
+type RegisterResponse = SessionResult["user"] & {
   verificationToken?: string;
-}
+};
 
 @Controller("auth")
 @AllowUnverified()
