@@ -5,7 +5,7 @@ import { HealthService } from "../src/health/health.service.js";
 function dependencies(overrides: Record<string, unknown> = {}) {
   return {
     database: { client: { $queryRaw: async () => [{ "?column?": 1 }] } },
-    redis: { ping: async () => "disabled", isRequired: () => false },
+    redis: { ping: async () => "up", mode: () => "database", isRequired: () => false },
     scanner: { ping: async () => "disabled", isRequired: () => false },
     storage: { ping: async () => "up", mode: () => "database" },
     email: { ping: async () => "disabled", isRequired: () => false },
@@ -35,21 +35,30 @@ describe("HealthController", () => {
 
   it("reports all production dependencies without exposing credentials", async () => {
     const result = await health({
-      redis: { ping: async () => "up", isRequired: () => true },
+      redis: { ping: async () => "up", mode: () => "redis", isRequired: () => true },
       scanner: { ping: async () => "up", isRequired: () => true },
       email: { ping: async () => "up", isRequired: () => true },
       ai: { healthStatus: () => ({ status: "up", provider: "openai", model: "configured-model" }), isRequired: () => true },
     }).readiness();
     expect(result.status).toBe("ready");
     expect(result.checks.database.status).toBe("up");
+    expect(result.checks.redis.mode).toBe("redis");
     expect(result.checks.storage.status).toBe("up");
     expect(result.checks.email.status).toBe("up");
     expect(result.checks.ai.status).toBe("up");
     expect(JSON.stringify(result)).not.toContain("API_KEY");
   });
 
-  it("is not ready when required Redis is down", async () => {
-    const result = await health({ redis: { ping: async () => "down", isRequired: () => true } }).readiness();
+  it("accepts PostgreSQL as the distributed rate-limit backend", async () => {
+    const result = await health({
+      redis: { ping: async () => "up", mode: () => "database", isRequired: () => true },
+    }).readiness();
+    expect(result.status).toBe("ready");
+    expect(result.checks.redis.mode).toBe("database");
+  });
+
+  it("is not ready when the required distributed limiter is unavailable", async () => {
+    const result = await health({ redis: { ping: async () => "down", mode: () => "memory", isRequired: () => true } }).readiness();
     expect(result.status).toBe("not_ready");
   });
 
