@@ -26,6 +26,7 @@ export interface SessionResult {
   token: string;
   expiresAt: Date;
   user: { id: string; name: string; email: string; emailVerified: boolean };
+  verificationToken?: string;
 }
 
 export const hashSessionToken = (token: string): string => createHash("sha256").update(token).digest("hex");
@@ -39,7 +40,7 @@ export class AuthService {
     private readonly emailWorker: EmailWorkerService,
   ) {}
 
-  async register(input: RegisterDto, metadata: RequestMetadata): Promise<SessionResult> {
+  async register(input: RegisterDto, metadata: RequestMetadata, exposeVerificationToken = false): Promise<SessionResult> {
     await this.limiter.consume(`register:${metadata.ipAddress ?? "unknown"}`, 5, 60 * 60 * 1000);
     const email = input.email.trim().toLowerCase();
     const duplicate = await this.database.client.user.findUnique({ where: { email } });
@@ -85,7 +86,8 @@ export class AuthService {
 
     await this.audit("auth.registered", user.id, "user", user.id, metadata);
     await this.emailWorker.processBatch();
-    return this.createSession(user.id, user.name, user.email, false, metadata);
+    const session = await this.createSession(user.id, user.name, user.email, false, metadata);
+    return exposeVerificationToken ? { ...session, verificationToken: verification.raw } : session;
   }
 
   async login(input: LoginDto, metadata: RequestMetadata): Promise<SessionResult> {
@@ -200,6 +202,53 @@ export class AuthService {
       }),
     ]);
     await this.audit("auth.password_reset_completed", token.userId, "user", token.userId, metadata);
+  }
+
+  async previewE2EState(userId: string): Promise<{ emailQueued: boolean; emailStatus: string | null; emailDelivered: boolean; attempts: number }> {
+    const user = await this.database.client.user.findUnique({ where: { id: userId }, select: { email: true } });
+    if (!user || !user.email.startsWith("azez-e2e-")) throw new NotFoundException();
+    const email = await this.database.client.emailOutbox.findFirst({
+      where: { recipient: user.email },
+      orderBy: { createdAt: "desc" },
+      select: { status: true, attempts: true },
+    });
+    return {
+      emailQueued: Boolean(email),
+      emailStatus: email?.status ?? null,
+      emailDelivered: email?.status === "SENT",
+      attempts: email?.attempts ?? 0,
+    };
+  }
+
+  async cleanupPreviewE2E(userId: string, metadata: RequestMetadata): Promise<void> {
+    const user = await this.database.client.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        memberships: { select: { organization: { select: { id: true, slug: true } } } },
+      },
+    });
+    if (!user || !user.email.startsWith("azez-e2e-")) throw new NotFoundException();
+    const organizations = user.memberships.map((membership: (typeof user.memberships)[number]) => membership.organization);
+    if (!organizations.length || organizations.some((organization: (typeof organizations)[number]) => !organization.slug.startsWith("azez-e2e-"))) {
+      throw new NotFoundException();
+    }
+    const organizationIds = organizations.map((organization: (typeof organizations)[number]) => organization.id);
+    for (const organizationId of organizationIds) {
+      await this.database.client.$executeRaw`
+        DELETE FROM "file_objects" WHERE "storage_key" LIKE ${`${organizationId}/%`}
+      `;
+    }
+    await this.limiter.reset(`register:${metadata.ipAddress ?? "unknown"}`);
+    await this.limiter.reset(`login:${metadata.ipAddress ?? "unknown"}:${fingerprint(user.email)}`);
+    await this.database.client.$transaction([
+      this.database.client.auditEvent.deleteMany({
+        where: { OR: [{ organizationId: { in: organizationIds } }, { actorId: userId }] },
+      }),
+      this.database.client.emailOutbox.deleteMany({ where: { recipient: user.email } }),
+      this.database.client.organization.deleteMany({ where: { id: { in: organizationIds } } }),
+      this.database.client.user.deleteMany({ where: { id: userId } }),
+    ]);
   }
 
   private async issueAccountToken(userId: string, email: string, name: string, purpose: "VERIFY_EMAIL" | "RESET_PASSWORD", ttlMs: number): Promise<void> {
