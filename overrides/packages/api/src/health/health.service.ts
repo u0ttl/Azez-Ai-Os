@@ -8,6 +8,13 @@ import { RedisService } from "../redis/redis.service.js";
 
 const SERVICE_NAME = "azez-ai-os-api";
 
+interface PreviewMigrationStateRow {
+  fileObjects: string | null;
+  fileObjectsRls: boolean | null;
+  rateLimitBuckets: string | null;
+  rateLimitBucketsRls: boolean | null;
+}
+
 function runtimeEnv(name: string): string | undefined {
   const value = globalThis.process?.env?.[name]?.trim();
   return value ? value : undefined;
@@ -42,6 +49,48 @@ export class HealthService {
       branch: runtimeEnv("BUILD_BRANCH") ?? runtimeEnv("VERCEL_GIT_COMMIT_REF") ?? null,
       deployment: runtimeEnv("VERCEL_DEPLOYMENT_ID") ?? runtimeEnv("VERCEL_URL") ?? null,
       builtAt: runtimeEnv("BUILD_TIMESTAMP") ?? null,
+    };
+  }
+
+  async applyPreviewMigrations() {
+    const statements = [
+      `CREATE TABLE IF NOT EXISTS public.file_objects (
+        storage_key VARCHAR(500) PRIMARY KEY,
+        content BYTEA NOT NULL,
+        mime_type VARCHAR(160) NOT NULL,
+        checksum VARCHAR(64) NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`,
+      `ALTER TABLE public.file_objects ENABLE ROW LEVEL SECURITY`,
+      `REVOKE ALL PRIVILEGES ON TABLE public.file_objects FROM anon, authenticated`,
+      `CREATE TABLE IF NOT EXISTS public.rate_limit_buckets (
+        bucket_key VARCHAR(500) PRIMARY KEY,
+        count INTEGER NOT NULL CHECK (count > 0),
+        reset_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS rate_limit_buckets_reset_at_idx ON public.rate_limit_buckets (reset_at)`,
+      `ALTER TABLE public.rate_limit_buckets ENABLE ROW LEVEL SECURITY`,
+      `REVOKE ALL PRIVILEGES ON TABLE public.rate_limit_buckets FROM anon, authenticated`,
+    ];
+
+    for (const statement of statements) {
+      await this.database.client.$executeRawUnsafe(statement);
+    }
+
+    const rows = await this.database.client.$queryRaw<PreviewMigrationStateRow[]>`
+      SELECT
+        to_regclass('public.file_objects')::text AS "fileObjects",
+        (SELECT relrowsecurity FROM pg_class WHERE oid = to_regclass('public.file_objects')) AS "fileObjectsRls",
+        to_regclass('public.rate_limit_buckets')::text AS "rateLimitBuckets",
+        (SELECT relrowsecurity FROM pg_class WHERE oid = to_regclass('public.rate_limit_buckets')) AS "rateLimitBucketsRls"
+    `;
+    const state = rows[0];
+    return {
+      status: state?.fileObjects && state?.rateLimitBuckets && state.fileObjectsRls && state.rateLimitBucketsRls ? "ready" : "not_ready",
+      fileObjects: { exists: Boolean(state?.fileObjects), rlsEnabled: Boolean(state?.fileObjectsRls) },
+      rateLimitBuckets: { exists: Boolean(state?.rateLimitBuckets), rlsEnabled: Boolean(state?.rateLimitBucketsRls) },
+      timestamp: new Date().toISOString(),
     };
   }
 
