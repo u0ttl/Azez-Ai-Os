@@ -15,6 +15,10 @@ interface PreviewMigrationStateRow {
   rateLimitBucketsRls: boolean | null;
 }
 
+interface DatabaseRoleRow {
+  roleName: string;
+}
+
 function runtimeEnv(name: string): string | undefined {
   const value = globalThis.process?.env?.[name]?.trim();
   return value ? value : undefined;
@@ -62,7 +66,6 @@ export class HealthService {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )`,
       `ALTER TABLE public.file_objects ENABLE ROW LEVEL SECURITY`,
-      `REVOKE ALL PRIVILEGES ON TABLE public.file_objects FROM anon, authenticated`,
       `CREATE TABLE IF NOT EXISTS public.rate_limit_buckets (
         bucket_key VARCHAR(500) PRIMARY KEY,
         count INTEGER NOT NULL CHECK (count > 0),
@@ -71,11 +74,22 @@ export class HealthService {
       )`,
       `CREATE INDEX IF NOT EXISTS rate_limit_buckets_reset_at_idx ON public.rate_limit_buckets (reset_at)`,
       `ALTER TABLE public.rate_limit_buckets ENABLE ROW LEVEL SECURITY`,
-      `REVOKE ALL PRIVILEGES ON TABLE public.rate_limit_buckets FROM anon, authenticated`,
     ];
 
     for (const statement of statements) {
       await this.database.client.$executeRawUnsafe(statement);
+    }
+
+    const roles = await this.database.client.$queryRaw<DatabaseRoleRow[]>`
+      SELECT rolname AS "roleName"
+      FROM pg_roles
+      WHERE rolname IN ('anon', 'authenticated')
+    `;
+    for (const role of roles) {
+      if (role.roleName !== "anon" && role.roleName !== "authenticated") continue;
+      const quotedRole = `"${role.roleName}"`;
+      await this.database.client.$executeRawUnsafe(`REVOKE ALL PRIVILEGES ON TABLE public.file_objects FROM ${quotedRole}`);
+      await this.database.client.$executeRawUnsafe(`REVOKE ALL PRIVILEGES ON TABLE public.rate_limit_buckets FROM ${quotedRole}`);
     }
 
     const rows = await this.database.client.$queryRaw<PreviewMigrationStateRow[]>`
@@ -90,6 +104,7 @@ export class HealthService {
       status: state?.fileObjects && state?.rateLimitBuckets && state.fileObjectsRls && state.rateLimitBucketsRls ? "ready" : "not_ready",
       fileObjects: { exists: Boolean(state?.fileObjects), rlsEnabled: Boolean(state?.fileObjectsRls) },
       rateLimitBuckets: { exists: Boolean(state?.rateLimitBuckets), rlsEnabled: Boolean(state?.rateLimitBucketsRls) },
+      revokedRoles: roles.map((role) => role.roleName),
       timestamp: new Date().toISOString(),
     };
   }
