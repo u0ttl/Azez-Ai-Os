@@ -142,12 +142,13 @@ jobs:
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
           E2E_SUMMARY_FILE: e2e-summary.txt
+          E2E_DIAGNOSTIC_FILE: e2e-diagnostic.txt
         run: |
           set -euo pipefail
           set -a
           source .env.preview
           set +a
-          bash scripts/verify-preview-e2e.sh
+          bash scripts/run-preview-e2e.sh
 
       - name: Upload Preview result
         if: always()
@@ -159,6 +160,9 @@ jobs:
             deploy-error.txt
             route-status.txt
             e2e-summary.txt
+            e2e-diagnostic.txt
+            e2e-run.stdout
+            e2e-run.stderr
             *.response
             *.error
           if-no-files-found: warn
