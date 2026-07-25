@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - launch-hardening-0.12.0
     types:
       - opened
       - reopened
@@ -120,6 +121,34 @@ jobs:
             exit 1
           fi
 
+      - name: Pull Preview environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes vercel@latest env pull .env.preview --environment=preview --yes --token "$VERCEL_TOKEN"
+          chmod 600 .env.preview
+
+      - name: Install PostgreSQL client when missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+
+      - name: Verify complete Preview story
+        shell: bash
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          E2E_SUMMARY_FILE: e2e-summary.txt
+        run: |
+          set -euo pipefail
+          set -a
+          source .env.preview
+          set +a
+          bash scripts/verify-preview-e2e.sh
+
       - name: Upload Preview result
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,6 +158,7 @@ jobs:
             preview-url.txt
             deploy-error.txt
             route-status.txt
+            e2e-summary.txt
             *.response
             *.error
           if-no-files-found: warn

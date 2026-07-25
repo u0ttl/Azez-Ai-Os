@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DatabaseService } from "../database/database.service.js";
+import { EmailWorkerService } from "../email/email-worker.service.js";
 import { SecurityRateLimiter } from "../security/rate-limiter.service.js";
 import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from "./auth.dto.js";
 import { RequestMetadata } from "./auth.types.js";
@@ -32,7 +33,11 @@ const fingerprint = (value: string): string => createHash("sha256").update(value
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly database: DatabaseService, private readonly limiter: SecurityRateLimiter) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly limiter: SecurityRateLimiter,
+    private readonly emailWorker: EmailWorkerService,
+  ) {}
 
   async register(input: RegisterDto, metadata: RequestMetadata): Promise<SessionResult> {
     await this.limiter.consume(`register:${metadata.ipAddress ?? "unknown"}`, 5, 60 * 60 * 1000);
@@ -79,6 +84,7 @@ export class AuthService {
     ]);
 
     await this.audit("auth.registered", user.id, "user", user.id, metadata);
+    await this.emailWorker.processBatch();
     return this.createSession(user.id, user.name, user.email, false, metadata);
   }
 
@@ -154,6 +160,7 @@ export class AuthService {
     if (!user || user.emailVerifiedAt) return;
     await this.issueAccountToken(user.id, user.email, user.name, "VERIFY_EMAIL", VERIFY_HOURS * 60 * 60 * 1000);
     await this.audit("auth.verification_resent", userId, "user", userId, metadata);
+    await this.emailWorker.processBatch();
   }
 
   async verifyEmail(rawToken: string, metadata: RequestMetadata): Promise<void> {
@@ -175,6 +182,7 @@ export class AuthService {
     if (!user || user.status !== "ACTIVE") return;
     await this.issueAccountToken(user.id, user.email, user.name, "RESET_PASSWORD", RESET_MINUTES * 60 * 1000);
     await this.audit("auth.password_reset_requested", user.id, "user", user.id, metadata);
+    await this.emailWorker.processBatch();
   }
 
   async resetPassword(input: ResetPasswordDto, metadata: RequestMetadata): Promise<void> {

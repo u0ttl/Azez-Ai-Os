@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, HeadBucketCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service.js";
@@ -6,6 +6,26 @@ import { DatabaseService } from "../database/database.service.js";
 interface StoredObjectRow {
   content: Uint8Array;
   mimeType: string;
+}
+
+interface StorageTableRow {
+  tableName: string | null;
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("STORAGE_HEALTH_TIMEOUT")), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 @Injectable()
@@ -34,6 +54,26 @@ export class ObjectStorageService {
 
   usesDatabaseFallback(): boolean {
     return !this.client;
+  }
+
+  mode(): "s3" | "database" {
+    return this.client ? "s3" : "database";
+  }
+
+  async ping(): Promise<"up" | "down"> {
+    try {
+      if (this.client) {
+        await withTimeout(
+          this.client.send(new HeadBucketCommand({ Bucket: this.bucket })),
+          Number(process.env.STORAGE_HEALTH_TIMEOUT_MS ?? 3000),
+        );
+        return "up";
+      }
+      await this.ensureFallbackTable();
+      return "up";
+    } catch {
+      return "down";
+    }
   }
 
   async put(key: string, body: Buffer, mimeType: string, checksum: string): Promise<void> {
@@ -97,15 +137,11 @@ export class ObjectStorageService {
   }
 
   private ensureFallbackTable(): Promise<void> {
-    const ready = this.fallbackReady ??= this.database.client.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "file_objects" (
-        "storage_key" VARCHAR(500) PRIMARY KEY,
-        "content" BYTEA NOT NULL,
-        "mime_type" VARCHAR(160) NOT NULL,
-        "checksum" VARCHAR(64) NOT NULL,
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `).then(() => undefined);
-    return ready;
+    this.fallbackReady ??= this.database.client.$queryRaw<StorageTableRow[]>`
+      SELECT to_regclass('public.file_objects')::text AS "tableName"
+    `.then((rows) => {
+      if (!rows[0]?.tableName) throw new Error("FILE_STORAGE_TABLE_MISSING");
+    });
+    return this.fallbackReady;
   }
 }
