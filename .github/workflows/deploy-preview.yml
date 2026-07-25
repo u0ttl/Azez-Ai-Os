@@ -71,14 +71,12 @@ jobs:
       - name: Apply migrations to actual Preview database
         shell: bash
         run: |
-          set -euo pipefail
-          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          npx --yes vercel@latest env run \
-            -e preview \
-            --git-branch "$branch" \
+          set -o pipefail
+          npx --yes vercel@latest \
             --token "$VERCEL_TOKEN" \
+            env run -e preview \
             -- bash scripts/apply-preview-database-migrations.sh \
-            | tee preview-database-migrations.txt
+            2>&1 | tee preview-database-migrations.txt
 
       - name: Deploy Preview
         id: deploy
