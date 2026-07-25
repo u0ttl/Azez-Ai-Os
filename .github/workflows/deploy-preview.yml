@@ -59,25 +59,6 @@ jobs:
           }
           JSON
 
-      - name: Install PostgreSQL client
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v psql >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq postgresql-client
-          fi
-
-      - name: Apply migrations to actual Preview database
-        shell: bash
-        run: |
-          set -o pipefail
-          npx --yes vercel@latest \
-            --token "$VERCEL_TOKEN" \
-            env run -e preview \
-            -- bash scripts/apply-preview-database-migrations.sh \
-            2>&1 | tee preview-database-migrations.txt
-
       - name: Deploy Preview
         id: deploy
         shell: bash
@@ -93,6 +74,15 @@ jobs:
           url="$(tail -n 1 preview-url.txt | tr -d '\r')"
           printf '%s\n' "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Apply protected Preview migrations
+        shell: bash
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          PREVIEW_MIGRATION_OUTPUT: preview-database-migrations.json
+        run: |
+          set -euo pipefail
+          bash scripts/apply-preview-migrations-via-api.sh
 
       - name: Verify Preview routes
         shell: bash
@@ -156,7 +146,7 @@ jobs:
         with:
           name: azez-vercel-preview-result
           path: |
-            preview-database-migrations.txt
+            preview-database-migrations.json
             preview-url.txt
             deploy-error.txt
             route-status.txt
