@@ -7,11 +7,7 @@ stderr_file="e2e-run.stderr"
 
 {
   echo "deployment_url_present=$([[ -n "${DEPLOYMENT_URL:-}" ]] && echo true || echo false)"
-  echo "database_url_present=$([[ -n "${DATABASE_URL:-}" ]] && echo true || echo false)"
-  echo "database_url_scheme=$(printf '%s' "${DATABASE_URL:-missing}" | sed -E 's#^([^:]+):.*#\1#')"
-  echo "smtp_configured=$([[ -n "${SMTP_HOST:-}" ]] && echo true || echo false)"
-  echo "ai_gateway_configured=$([[ -n "${AI_GATEWAY_API_KEY:-}" || -n "${VERCEL_OIDC_TOKEN:-}" ]] && echo true || echo false)"
-  echo "openai_configured=$([[ -n "${OPENAI_API_KEY:-}" ]] && echo true || echo false)"
+  echo "credential_free_e2e=true"
   echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } > "$diagnostic"
 
@@ -24,10 +20,10 @@ set -e
   echo "exit_code=$status"
   echo "finished_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "stderr_tail_begin"
-  tail -n 120 "$stderr_file" || true
+  tail -n 160 "$stderr_file" || true
   echo "stderr_tail_end"
   echo "stdout_tail_begin"
-  tail -n 120 "$stdout_file" || true
+  tail -n 160 "$stdout_file" || true
   echo "stdout_tail_end"
 } >> "$diagnostic"
 
