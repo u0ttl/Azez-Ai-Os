@@ -1,0 +1,38 @@
+name: Package complete AZEZ source
+
+on:
+  push:
+    branches:
+      - repair/production-readiness-2026-07-25
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Prepare clean tracked project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/source
+          git archive HEAD | tar -x -C dist/source
+          printf '%s\n' "${GITHUB_SHA}" > dist/source/SOURCE_COMMIT.txt
+          printf '%s\n' "repair/production-readiness-2026-07-25" > dist/source/SOURCE_BRANCH.txt
+          find dist/source -type f -print0 | sort -z | xargs -0 sha256sum > dist/source/SHA256SUMS.txt
+
+      - name: Upload complete project source
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-ai-os-complete-source
+          path: dist/source
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
