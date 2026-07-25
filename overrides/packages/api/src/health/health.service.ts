@@ -80,7 +80,7 @@ export class HealthService {
       await this.database.client.$executeRawUnsafe(statement);
     }
 
-    const roles = await this.database.client.$queryRaw<DatabaseRoleRow[]>`
+    const roles: DatabaseRoleRow[] = await this.database.client.$queryRaw<DatabaseRoleRow[]>`
       SELECT rolname AS "roleName"
       FROM pg_roles
       WHERE rolname IN ('anon', 'authenticated')
@@ -104,7 +104,7 @@ export class HealthService {
       status: state?.fileObjects && state?.rateLimitBuckets && state.fileObjectsRls && state.rateLimitBucketsRls ? "ready" : "not_ready",
       fileObjects: { exists: Boolean(state?.fileObjects), rlsEnabled: Boolean(state?.fileObjectsRls) },
       rateLimitBuckets: { exists: Boolean(state?.rateLimitBuckets), rlsEnabled: Boolean(state?.rateLimitBucketsRls) },
-      revokedRoles: roles.map((role) => role.roleName),
+      revokedRoles: roles.map((role: DatabaseRoleRow) => role.roleName),
       timestamp: new Date().toISOString(),
     };
   }
