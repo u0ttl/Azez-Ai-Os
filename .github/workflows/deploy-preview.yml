@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - launch-hardening-0.12.0
     types:
       - opened
       - reopened
@@ -30,6 +31,24 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
+
+      - name: Prepare complete tracked project source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p complete-source
+          git archive HEAD | tar -x -C complete-source
+          printf '%s\n' "${GITHUB_SHA}" > complete-source/SOURCE_COMMIT.txt
+          printf '%s\n' "${GITHUB_HEAD_REF:-repair/production-readiness-2026-07-25}" > complete-source/SOURCE_BRANCH.txt
+
+      - name: Upload complete project source
+        uses: actions/upload-artifact@v4
+        with:
+          name: azez-ai-os-complete-source
+          path: complete-source
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
 
       - name: Use Node.js 24
         uses: actions/setup-node@v4
@@ -73,6 +92,15 @@ jobs:
           url="$(tail -n 1 preview-url.txt | tr -d '\r')"
           printf '%s\n' "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Apply protected Preview migrations
+        shell: bash
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          PREVIEW_MIGRATION_OUTPUT: preview-database-migrations.json
+        run: |
+          set -euo pipefail
+          bash scripts/apply-preview-migrations-via-api.sh
 
       - name: Verify Preview routes
         shell: bash
@@ -120,15 +148,30 @@ jobs:
             exit 1
           fi
 
+      - name: Verify complete Preview story
+        shell: bash
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          E2E_SUMMARY_FILE: e2e-summary.txt
+          E2E_DIAGNOSTIC_FILE: e2e-diagnostic.txt
+        run: |
+          set -euo pipefail
+          bash scripts/run-preview-e2e.sh
+
       - name: Upload Preview result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: azez-vercel-preview-result
           path: |
+            preview-database-migrations.json
             preview-url.txt
             deploy-error.txt
             route-status.txt
+            e2e-summary.txt
+            e2e-diagnostic.txt
+            e2e-run.stdout
+            e2e-run.stderr
             *.response
             *.error
           if-no-files-found: warn

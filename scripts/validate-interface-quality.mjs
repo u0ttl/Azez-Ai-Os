@@ -12,6 +12,7 @@ const css = read("app/globals.css");
 const layout = read("app/layout.tsx");
 const desktop = read("components/azez-desktop.tsx");
 const webglCore = read("components/holographic-ai-core.tsx");
+const authPage = read("components/auth-page-client.tsx");
 const premiumMarker = "/* AZEZ_PREMIUM_AGENCY_PASS */";
 const cohesionMarker = "/* AZEZ_PREMIUM_COHESION_FIX */";
 const spatial3dMarker = "/* AZEZ_SPATIAL_3D_REPAIR */";
@@ -44,6 +45,9 @@ const checks = [
   ["CRM pipeline stays usable with horizontal snapping", css.includes(".pipeline{display:flex!important") && css.includes("scroll-snap-type:x proximity!important")],
   ["project kanban stays usable with horizontal snapping", css.includes(".kanban-board{display:flex!important") && css.includes(".kanban-column{flex:0 0 min(84vw,320px)!important")],
   ["account and registration use a single mobile column", css.includes(".auth-visual-panel{display:none!important") && css.includes(".auth-field-row{grid-template-columns:1fr!important")],
+  ["registration uses stable hydration defaults", authPage.includes('useState<Lang>("ar")') && authPage.includes('useState<Theme>("dark")') && !authPage.includes("useState<Lang>(initialLanguage)")],
+  ["registration skips the decorative desktop payload", authPage.includes("!isRegister && (") && authPage.includes('auth-page--${mode}')],
+  ["registration has a final lightweight rendering profile", css.includes("/* AZEZ_REGISTER_PERFORMANCE") && css.includes(".auth-page--register") && css.includes("contain:layout paint!important")],
   ["mobile navigation reserves a non-overlapping content gutter", css.includes("padding-bottom:calc(116px + env(safe-area-inset-bottom))!important")],
   ["five readable mobile navigation slots fit without edge clipping", css.includes("flex:0 0 20%!important") && css.includes("scroll-snap-type:x mandatory!important") && css.includes("scroll-snap-align:start!important")],
   ["registration account type has an explicit active state", css.includes('.account-type-button[aria-pressed="true"]') && css.includes("color:#fff!important")],

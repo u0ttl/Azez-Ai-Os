@@ -47,31 +47,38 @@ const COPY = {
   },
 } as const;
 
-function initialLanguage(): Lang {
-  if (typeof window === "undefined") return "ar";
+function storedLanguage(): Lang {
   const saved = window.localStorage.getItem("azez-language");
   return saved === "ar" || saved === "en" ? saved : "ar";
 }
 
-function initialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+function storedTheme(): Theme {
   const saved = window.localStorage.getItem("azez-theme");
   if (saved === "dark" || saved === "light") return saved;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function AuthPageClient({ mode }: { mode: Mode }) {
-  const [lang, setLang] = useState<Lang>(initialLanguage);
-  const [theme, setTheme] = useState<Theme>(initialTheme);
+  // Stable server/client defaults prevent an expensive hydration replacement.
+  const [lang, setLang] = useState<Lang>("ar");
+  const [theme, setTheme] = useState<Theme>("dark");
+  const isRegister = mode === "register";
 
   useEffect(() => {
     document.body.dataset.page = "auth";
-    const resetScroll = window.setTimeout(() => window.scrollTo(0, 0), 0);
+    document.body.dataset.authMode = mode;
+
+    const nextLanguage = storedLanguage();
+    const nextTheme = storedTheme();
+    setLang((current) => current === nextLanguage ? current : nextLanguage);
+    setTheme((current) => current === nextTheme ? current : nextTheme);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
     return () => {
-      window.clearTimeout(resetScroll);
       delete document.body.dataset.page;
+      delete document.body.dataset.authMode;
     };
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -82,10 +89,9 @@ export function AuthPageClient({ mode }: { mode: Mode }) {
   }, [lang, theme]);
 
   const copy = COPY[lang];
-  const isRegister = mode === "register";
 
   return (
-    <main className="auth-page" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <main className={`auth-page auth-page--${mode}`} dir={lang === "ar" ? "rtl" : "ltr"}>
       <section className="auth-card">
         <header className="auth-toolbar">
           <div className="auth-brand">
@@ -131,13 +137,15 @@ export function AuthPageClient({ mode }: { mode: Mode }) {
         </small>
       </section>
 
-      <aside className="auth-art" aria-label={isRegister ? copy.registerAside : copy.loginAside}>
-        <div className="auth-art-orb" aria-hidden="true"><span>A</span></div>
-        <span>AZEZ AI OS</span>
-        <strong>{isRegister ? copy.registerAside : copy.loginAside}</strong>
-        <p>{copy.asideText}</p>
-        <div className="auth-art-grid" aria-hidden="true" />
-      </aside>
+      {!isRegister && (
+        <aside className="auth-art" aria-label={copy.loginAside}>
+          <div className="auth-art-orb" aria-hidden="true"><span>A</span></div>
+          <span>AZEZ AI OS</span>
+          <strong>{copy.loginAside}</strong>
+          <p>{copy.asideText}</p>
+          <div className="auth-art-grid" aria-hidden="true" />
+        </aside>
+      )}
     </main>
   );
 }

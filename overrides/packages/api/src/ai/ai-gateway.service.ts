@@ -43,6 +43,18 @@ export class AIGatewayService {
     }
   }
 
+  isRequired(): boolean {
+    return process.env.AI_REQUIRED === "true";
+  }
+
+  healthStatus(): { status: "up" | "disabled"; provider: AIGatewayStatus["provider"]; model: string } {
+    return {
+      status: this.openai ? "up" : "disabled",
+      provider: this.provider,
+      model: this.model,
+    };
+  }
+
   async answer(organizationId: string, question: string, context: KnowledgeResult[]): Promise<AICompletion> {
     const maxCharacters = Number(process.env.AI_MAX_INPUT_CHARACTERS ?? 20000);
     if (question.length > maxCharacters) throw new Error("AI_INPUT_LIMIT_EXCEEDED");
