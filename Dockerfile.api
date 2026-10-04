@@ -22,6 +22,7 @@ COPY --from=builder --chown=azez:azez /app/apps/api/package.json ./apps/api/pack
 COPY --from=builder --chown=azez:azez /app/packages/database ./packages/database
 COPY --from=builder --chown=azez:azez /app/package.json ./package.json
 COPY --from=builder --chown=azez:azez /app/apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
-USER azez
+# Prisma engines were cached in /root/.cache during build; restore for runtime (runs as root)
+COPY --from=builder /root/.cache/prisma /root/.cache/prisma
 EXPOSE 4000
 CMD ["sh", "./docker-entrypoint.sh"]
