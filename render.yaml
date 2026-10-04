@@ -9,6 +9,7 @@ services:
     name: azez-ai-os-redis
     plan: free
     maxmemoryPolicy: noeviction
+    ipAllowList: []
 
   - type: web
     name: azez-ai-os-api
