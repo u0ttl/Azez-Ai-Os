@@ -1,0 +1,808 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  GUEST
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+enum AuditActorType {
+  USER
+  SYSTEM
+  AGENT
+}
+
+enum CompanyStatus {
+  PROSPECT
+  ACTIVE
+  INACTIVE
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DocumentStatus {
+  PROCESSING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum WorkflowTriggerType {
+  MANUAL
+  SCHEDULE
+  EVENT
+}
+
+enum WorkflowActionType {
+  CREATE_TASK
+  CREATE_LEAD
+  HUMAN_APPROVAL
+}
+
+enum WorkflowRunStatus {
+  RUNNING
+  WAITING_APPROVAL
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum StepRunStatus {
+  PENDING
+  RUNNING
+  WAITING_APPROVAL
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlanStatus {
+  ACTIVE
+  HIDDEN
+  ARCHIVED
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingEventStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+enum AccountTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+enum EmailOutboxStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum FileScanStatus {
+  PENDING
+  CLEAN
+  REJECTED
+  FAILED
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique @db.VarChar(320)
+  name         String       @db.VarChar(160)
+  passwordHash String?      @map("password_hash")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  passwordChangedAt DateTime? @map("password_changed_at")
+  locale       String       @default("ar") @db.VarChar(10)
+  timezone     String       @default("Asia/Aden") @db.VarChar(64)
+  status       UserStatus   @default(ACTIVE)
+  memberships  Membership[]
+  sessions     Session[]
+  accountTokens AccountToken[]
+  conversations Conversation[]
+  projectMemberships ProjectMember[]
+  taskComments TaskComment[]
+  uploadedFiles FileAsset[]
+  notifications Notification[]
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  deletedAt    DateTime?    @map("deleted_at")
+
+  @@map("users")
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @db.VarChar(160)
+  slug        String       @unique @db.VarChar(80)
+  locale      String       @default("ar") @db.VarChar(10)
+  timezone    String       @default("Asia/Aden") @db.VarChar(64)
+  memberships Membership[]
+  auditEvents AuditEvent[]
+  companies   Company[]
+  leads       Lead[]
+  activities  Activity[]
+  projects    Project[]
+  knowledgeBases KnowledgeBase[]
+  conversations Conversation[]
+  aiUsage      AIUsage[]
+  workflows    Workflow[]
+  workflowRuns WorkflowRun[]
+  subscriptions Subscription[]
+  usageEvents  UsageEvent[]
+  files        FileAsset[]
+  notifications Notification[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  deletedAt   DateTime?    @map("deleted_at")
+
+  @@map("organizations")
+}
+
+model Plan {
+  id           String            @id @default(uuid()) @db.Uuid
+  code         String            @unique @db.VarChar(40)
+  name         String            @db.VarChar(120)
+  description  String?
+  status       PlanStatus        @default(ACTIVE)
+  prices       PlanPrice[]
+  entitlements PlanEntitlement[]
+  subscriptions Subscription[]
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@map("plans")
+}
+
+model PlanPrice {
+  id          String          @id @default(uuid()) @db.Uuid
+  planId      String          @map("plan_id") @db.Uuid
+  amountMinor BigInt          @map("amount_minor")
+  currency    String          @default("USD") @db.Char(3)
+  interval    BillingInterval
+  active      Boolean         @default(true)
+  plan        Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@unique([planId, currency, interval])
+  @@map("plan_prices")
+}
+
+model PlanEntitlement {
+  id         String   @id @default(uuid()) @db.Uuid
+  planId     String   @map("plan_id") @db.Uuid
+  key        String   @db.VarChar(100)
+  enabled    Boolean  @default(true)
+  limitValue BigInt?  @map("limit_value")
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([planId, key])
+  @@map("plan_entitlements")
+}
+
+model Subscription {
+  id                 String             @id @default(uuid()) @db.Uuid
+  organizationId     String             @map("organization_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  status             SubscriptionStatus @default(ACTIVE)
+  provider           String             @default("internal") @db.VarChar(40)
+  providerCustomerId String?            @map("provider_customer_id") @db.VarChar(180)
+  providerReference  String?            @map("provider_reference") @db.VarChar(180)
+  currentPeriodStart DateTime            @default(now()) @map("current_period_start")
+  currentPeriodEnd   DateTime?           @map("current_period_end")
+  cancelAtPeriodEnd  Boolean             @default(false) @map("cancel_at_period_end")
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan               Plan                @relation(fields: [planId], references: [id], onDelete: Restrict)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  @@index([organizationId, status, createdAt])
+  @@index([provider, providerReference])
+  @@map("subscriptions")
+}
+
+model UsageEvent {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  metric         String       @db.VarChar(100)
+  quantity       BigInt       @default(1)
+  idempotencyKey String       @unique @map("idempotency_key") @db.VarChar(180)
+  metadata       Json?
+  occurredAt     DateTime     @default(now()) @map("occurred_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, metric, occurredAt])
+  @@map("usage_events")
+}
+
+model BillingWebhookEvent {
+  id             String             @id @default(uuid()) @db.Uuid
+  provider       String             @db.VarChar(40)
+  externalId     String             @map("external_id") @db.VarChar(180)
+  status         BillingEventStatus @default(RECEIVED)
+  payloadChecksum String            @map("payload_checksum") @db.VarChar(64)
+  errorMessage   String?            @map("error_message")
+  receivedAt     DateTime           @default(now()) @map("received_at")
+  processedAt    DateTime?          @map("processed_at")
+
+  @@unique([provider, externalId])
+  @@index([status, receivedAt])
+  @@map("billing_webhook_events")
+}
+
+model Workflow {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  name           String              @db.VarChar(180)
+  description    String?
+  status         WorkflowStatus      @default(DRAFT)
+  triggerType    WorkflowTriggerType @default(MANUAL) @map("trigger_type")
+  triggerConfig  Json?               @map("trigger_config")
+  version        Int                 @default(1)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps          WorkflowStep[]
+  runs           WorkflowRun[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  deletedAt      DateTime?           @map("deleted_at")
+
+  @@index([organizationId, status, createdAt])
+  @@map("workflows")
+}
+
+model WorkflowStep {
+  id         String             @id @default(uuid()) @db.Uuid
+  workflowId String             @map("workflow_id") @db.Uuid
+  name       String             @db.VarChar(180)
+  position   Int
+  actionType WorkflowActionType @map("action_type")
+  config     Json
+  workflow   Workflow           @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepRuns   WorkflowStepRun[]
+  approvals  WorkflowApproval[]
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+
+  @@unique([workflowId, position])
+  @@index([workflowId, position])
+  @@map("workflow_steps")
+}
+
+model WorkflowRun {
+  id                String            @id @default(uuid()) @db.Uuid
+  organizationId    String            @map("organization_id") @db.Uuid
+  workflowId        String            @map("workflow_id") @db.Uuid
+  triggeredByUserId String?           @map("triggered_by_user_id") @db.Uuid
+  status            WorkflowRunStatus @default(RUNNING)
+  input             Json?
+  output            Json?
+  errorMessage      String?           @map("error_message")
+  currentPosition   Int               @default(0) @map("current_position")
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflow          Workflow          @relation(fields: [workflowId], references: [id], onDelete: Restrict)
+  stepRuns          WorkflowStepRun[]
+  approvals         WorkflowApproval[]
+  startedAt         DateTime          @default(now()) @map("started_at")
+  finishedAt        DateTime?         @map("finished_at")
+
+  @@index([organizationId, status, startedAt])
+  @@index([workflowId, startedAt])
+  @@map("workflow_runs")
+}
+
+model WorkflowStepRun {
+  id           String        @id @default(uuid()) @db.Uuid
+  runId        String        @map("run_id") @db.Uuid
+  stepId       String        @map("step_id") @db.Uuid
+  status       StepRunStatus @default(PENDING)
+  attempt      Int           @default(1)
+  input        Json?
+  output       Json?
+  errorMessage String?       @map("error_message")
+  run          WorkflowRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  step         WorkflowStep  @relation(fields: [stepId], references: [id], onDelete: Restrict)
+  startedAt    DateTime?     @map("started_at")
+  finishedAt   DateTime?     @map("finished_at")
+
+  @@unique([runId, stepId, attempt])
+  @@index([runId, status])
+  @@map("workflow_step_runs")
+}
+
+model WorkflowApproval {
+  id              String         @id @default(uuid()) @db.Uuid
+  runId           String         @map("run_id") @db.Uuid
+  stepId          String         @map("step_id") @db.Uuid
+  requestedById   String?        @map("requested_by_id") @db.Uuid
+  decidedById     String?        @map("decided_by_id") @db.Uuid
+  status          ApprovalStatus @default(PENDING)
+  summary         String         @db.VarChar(500)
+  decisionComment String?        @map("decision_comment") @db.VarChar(1000)
+  run             WorkflowRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  step            WorkflowStep   @relation(fields: [stepId], references: [id], onDelete: Restrict)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  decidedAt       DateTime?      @map("decided_at")
+
+  @@index([runId, status])
+  @@index([status, createdAt])
+  @@map("workflow_approvals")
+}
+
+model KnowledgeBase {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  name           String              @db.VarChar(180)
+  description    String?
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents      KnowledgeDocument[]
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  deletedAt      DateTime?           @map("deleted_at")
+
+  @@index([organizationId, createdAt])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id              String         @id @default(uuid()) @db.Uuid
+  knowledgeBaseId String         @map("knowledge_base_id") @db.Uuid
+  title           String         @db.VarChar(240)
+  sourceType      String         @default("text") @map("source_type") @db.VarChar(40)
+  checksum        String         @db.VarChar(64)
+  status          DocumentStatus @default(PROCESSING)
+  version         Int            @default(1)
+  errorMessage    String?        @map("error_message")
+  knowledgeBase   KnowledgeBase  @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks          DocumentChunk[]
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  deletedAt       DateTime?      @map("deleted_at")
+
+  @@unique([knowledgeBaseId, checksum, version])
+  @@index([knowledgeBaseId, status, createdAt])
+  @@map("knowledge_documents")
+}
+
+model DocumentChunk {
+  id         String            @id @default(uuid()) @db.Uuid
+  documentId String            @map("document_id") @db.Uuid
+  position   Int
+  content    String
+  tokenCount Int?              @map("token_count")
+  metadata   Json?
+  embedding  Unsupported("vector(1536)")?
+  document   KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime          @default(now()) @map("created_at")
+
+  @@unique([documentId, position])
+  @@index([documentId, position])
+  @@map("document_chunks")
+}
+
+model Conversation {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  title          String       @db.VarChar(180)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+
+  @@index([organizationId, userId, updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  role           MessageRole
+  content        String
+  provider       String?      @db.VarChar(60)
+  model          String?      @db.VarChar(100)
+  citations      Json?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model AIUsage {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String?      @map("user_id") @db.Uuid
+  provider       String       @db.VarChar(60)
+  model          String       @db.VarChar(100)
+  operation      String       @db.VarChar(80)
+  inputUnits     Int          @default(0) @map("input_units")
+  outputUnits    Int          @default(0) @map("output_units")
+  estimatedCostMinor BigInt   @default(0) @map("estimated_cost_minor")
+  currency       String       @default("USD") @db.Char(3)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@map("ai_usage")
+}
+
+model Company {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  name           String        @db.VarChar(180)
+  email          String?       @db.VarChar(320)
+  phone          String?       @db.VarChar(40)
+  website        String?       @db.VarChar(300)
+  status         CompanyStatus @default(PROSPECT)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts       Contact[]
+  leads          Lead[]
+  activities     Activity[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+
+  @@index([organizationId, status, createdAt])
+  @@index([organizationId, name])
+  @@map("companies")
+}
+
+model Contact {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String   @db.VarChar(180)
+  email     String?  @db.VarChar(320)
+  phone     String?  @db.VarChar(40)
+  jobTitle  String?  @map("job_title") @db.VarChar(120)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  activities Activity[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId, createdAt])
+  @@map("contacts")
+}
+
+model Lead {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  companyId      String?      @map("company_id") @db.Uuid
+  title          String       @db.VarChar(180)
+  status         LeadStatus   @default(NEW)
+  valueMinor     BigInt?      @map("value_minor")
+  currency       String       @default("USD") @db.Char(3)
+  ownerUserId    String?      @map("owner_user_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company        Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  activities     Activity[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+
+  @@index([organizationId, status, createdAt])
+  @@index([companyId])
+  @@map("leads")
+}
+
+model Activity {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  companyId      String?      @map("company_id") @db.Uuid
+  contactId      String?      @map("contact_id") @db.Uuid
+  leadId         String?      @map("lead_id") @db.Uuid
+  createdByUserId String?     @map("created_by_user_id") @db.Uuid
+  type           String       @db.VarChar(40)
+  subject        String       @db.VarChar(200)
+  notes          String?
+  occurredAt     DateTime     @map("occurred_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  company        Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contact        Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  lead           Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId, occurredAt])
+  @@index([companyId, occurredAt])
+  @@index([contactId, occurredAt])
+  @@index([leadId, occurredAt])
+  @@map("activities")
+}
+
+model Project {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  name           String        @db.VarChar(180)
+  description    String?
+  status         ProjectStatus @default(PLANNING)
+  startsAt       DateTime?     @map("starts_at")
+  dueAt          DateTime?     @map("due_at")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks          Task[]
+  members        ProjectMember[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+
+  @@index([organizationId, status, createdAt])
+  @@map("projects")
+}
+
+model Task {
+  id             String       @id @default(uuid()) @db.Uuid
+  projectId      String       @map("project_id") @db.Uuid
+  title          String       @db.VarChar(240)
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  assigneeUserId String?      @map("assignee_user_id") @db.Uuid
+  dueAt          DateTime?    @map("due_at")
+  position       Int          @default(0)
+  completedAt    DateTime?    @map("completed_at")
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  comments       TaskComment[]
+  attachments    TaskAttachment[]
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+
+  @@index([projectId, status, position])
+  @@index([assigneeUserId, status])
+  @@map("tasks")
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      String   @default("MEMBER") @db.VarChar(40)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([projectId, userId])
+  @@index([userId, createdAt])
+  @@map("project_members")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  content   String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([taskId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("task_comments")
+}
+
+model FileAsset {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  uploaderUserId String         @map("uploader_user_id") @db.Uuid
+  storageKey     String         @unique @map("storage_key") @db.VarChar(500)
+  fileName       String         @map("file_name") @db.VarChar(255)
+  mimeType       String         @map("mime_type") @db.VarChar(160)
+  sizeBytes      BigInt         @map("size_bytes")
+  checksum       String         @db.VarChar(64)
+  scanStatus     FileScanStatus @default(PENDING) @map("scan_status")
+  scanDetails    String?        @map("scan_details") @db.VarChar(500)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploader       User           @relation(fields: [uploaderUserId], references: [id], onDelete: Restrict)
+  taskAttachment TaskAttachment?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  deletedAt      DateTime?      @map("deleted_at")
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, checksum])
+  @@index([scanStatus, createdAt])
+  @@map("file_assets")
+}
+
+model TaskAttachment {
+  id        String    @id @default(uuid()) @db.Uuid
+  taskId    String    @map("task_id") @db.Uuid
+  fileId    String    @unique @map("file_id") @db.Uuid
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  file      FileAsset @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([taskId, createdAt])
+  @@map("task_attachments")
+}
+
+model Notification {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  type           String       @db.VarChar(80)
+  title          String       @db.VarChar(180)
+  body           String       @db.VarChar(1000)
+  link           String?      @db.VarChar(500)
+  dedupeKey      String?      @map("dedupe_key") @db.VarChar(180)
+  readAt         DateTime?    @map("read_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([organizationId, userId, dedupeKey])
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId, createdAt])
+  @@map("notifications")
+}
+
+model Membership {
+  id             String           @id @default(uuid()) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  role           MembershipRole   @default(MEMBER)
+  status         MembershipStatus @default(INVITED)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+  @@map("memberships")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(128)
+  expiresAt DateTime @map("expires_at")
+  ipAddress String? @map("ip_address") @db.VarChar(64)
+  userAgent String? @map("user_agent") @db.VarChar(512)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+  revokeReason String? @map("revoke_reason") @db.VarChar(80)
+
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+model AccountToken {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  purpose   AccountTokenPurpose
+  tokenHash String              @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime            @map("expires_at")
+  consumedAt DateTime?          @map("consumed_at")
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  @@index([userId, purpose, expiresAt])
+  @@map("account_tokens")
+}
+
+model EmailOutbox {
+  id          String            @id @default(uuid()) @db.Uuid
+  recipient   String            @db.VarChar(320)
+  template    String            @db.VarChar(80)
+  payload     Json
+  status      EmailOutboxStatus @default(PENDING)
+  attempts    Int               @default(0)
+  availableAt DateTime          @default(now()) @map("available_at")
+  claimedAt   DateTime?         @map("claimed_at")
+  sentAt      DateTime?         @map("sent_at")
+  lastError   String?           @map("last_error")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@map("email_outbox")
+}
+
+model AuditEvent {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String?        @map("organization_id") @db.Uuid
+  actorId        String?        @map("actor_id") @db.Uuid
+  actorType      AuditActorType @map("actor_type")
+  action         String         @db.VarChar(120)
+  resourceType   String         @map("resource_type") @db.VarChar(80)
+  resourceId     String?        @map("resource_id") @db.VarChar(80)
+  requestId      String?        @map("request_id") @db.VarChar(80)
+  metadata       Json?
+  organization   Organization?  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("audit_events")
+}

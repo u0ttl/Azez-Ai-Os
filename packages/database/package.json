@@ -1,0 +1,38 @@
+{
+  "name": "@azez/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "deploy": "prisma migrate deploy",
+    "seed": "prisma generate && tsx src/seed.ts",
+    "studio": "prisma studio",
+    "build": "prisma generate && tsup src/index.ts --format esm --out-dir dist --clean",
+    "typecheck": "tsc --noEmit",
+    "lint": "prisma validate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.8.0",
+    "@prisma/client": "7.8.0",
+    "dotenv": "17.2.3",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/pg": "8.15.6",
+    "prisma": "7.8.0",
+    "tsup": "8.5.1",
+    "tsx": "^4.23.0",
+    "typescript": "5.9.3"
+  }
+}
