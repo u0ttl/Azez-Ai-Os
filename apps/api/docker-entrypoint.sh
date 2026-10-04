@@ -1,11 +1,13 @@
 #!/bin/sh
 set -e
 echo "Running Prisma migrations..."
-# pnpm isolates bins per-package; prisma lives in the database package
-PRISMA="./packages/database/node_modules/.bin/prisma"
-if [ ! -f "$PRISMA" ]; then
-  PRISMA="./node_modules/.bin/prisma"
+# Prisma 7 loads prisma.config.ts from the current directory
+cd ./packages/database
+if [ -f "./node_modules/.bin/prisma" ]; then
+  ./node_modules/.bin/prisma migrate deploy
+else
+  ../node_modules/.bin/prisma migrate deploy
 fi
-"$PRISMA" migrate deploy --schema ./packages/database/prisma/schema.prisma
+cd /app
 echo "Starting API..."
 exec node apps/api/dist/src/main.js
