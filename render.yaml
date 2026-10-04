@@ -1,9 +1,20 @@
+databases:
+  - name: azez-ai-os-db
+    databaseName: azezdb
+    user: azez
+    plan: free
+
 services:
+  - type: redis
+    name: azez-ai-os-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+
   - type: web
     name: azez-ai-os-api
     runtime: docker
     plan: free
-    dockerfilePath: ./Dockerfile.render
+    dockerfilePath: ./Dockerfile.api
     healthCheckPath: /v1/health/ready
     autoDeployTrigger: commit
     envVars:
@@ -30,9 +41,14 @@ services:
       - key: EMBEDDINGS_ENABLED
         value: "false"
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: azez-ai-os-db
+          property: connectionString
       - key: REDIS_URL
-        sync: false
+        fromService:
+          type: redis
+          name: azez-ai-os-redis
+          property: connectionString
       - key: SESSION_SECRET
         generateValue: true
       - key: METRICS_TOKEN
