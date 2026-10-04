@@ -50,7 +50,7 @@ export default function DashboardPage() {
             <p className="eyebrow">الاثنين، 13 يوليو</p>
             <h1>مرحبًا عزيز، هذه أعمالك اليوم</h1>
           </div>
-          <div className="top-actions"><button className="ghost">⌕ بحث</button><button className="avatar" aria-label="الحساب">ع</button></div>
+          <div className="top-actions"><a className="ghost" href="/knowledge">⌕ بحث</a><a className="avatar" aria-label="الحساب" href="/billing">ع</a></div>
         </header>
 
         <section className="hero cinematic-hero">
@@ -61,7 +61,7 @@ export default function DashboardPage() {
               <h2>ماذا تريد أن تنجز؟</h2>
               <p>اطلب ملخصًا، أنشئ مهمة، حلّل بيانات العملاء أو شغّل سير عمل.</p>
             </div>
-            <button className="primary">ابدأ محادثة <span>←</span></button>
+            <a className="primary" href="/ai">ابدأ محادثة <span>←</span></a>
           </div>
         </section>
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
         <section className="dashboard-grid">
           <article className="panel tasks-panel">
-            <div className="panel-heading"><div><span className="eyebrow">مساحة التنفيذ</span><h3>الأعمال ذات الأولوية</h3></div><button className="text-button">عرض الكل</button></div>
+            <div className="panel-heading"><div><span className="eyebrow">مساحة التنفيذ</span><h3>الأعمال ذات الأولوية</h3></div><a className="text-button" href="/projects">عرض الكل</a></div>
             <div className="task-list">
               {tasks.map((task) => (
                 <div className="task-row" key={task.title}><span className="task-check" /><div><strong>{task.title}</strong><small>{task.meta}</small></div><span className="status">{task.state}</span></div>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             <span className="eyebrow">رؤية ذكية</span><h3>فرصة تحتاج انتباهك</h3>
             <p>ثلاثة عملاء محتملين لم تتم متابعتهم منذ أكثر من 48 ساعة.</p>
             <div className="insight-number"><strong>68%</strong><span>احتمال التحويل</span></div>
-            <button className="secondary">إنشاء خطة متابعة</button>
+            <a className="secondary" href="/workflows">إنشاء خطة متابعة</a>
           </article>
         </section>
       </section>

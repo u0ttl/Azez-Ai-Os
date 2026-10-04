@@ -44,3 +44,5 @@
 @media (prefers-reduced-motion:reduce){.boot-overlay{display:none}}
 .hero-flex{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;width:100%}
 @media(max-width:560px){.hero-flex{align-items:flex-start;flex-direction:column}}
+
+a.ghost,a.primary,a.secondary,a.text-button{text-decoration:none;display:inline-block}a.avatar{text-decoration:none;display:grid;place-items:center}
