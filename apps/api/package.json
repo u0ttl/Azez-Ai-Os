@@ -1,0 +1,50 @@
+{
+  "name": "@azez/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/src/main.js",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1085.0",
+    "@aws-sdk/s3-request-presigner": "^3.1085.0",
+    "@azez/database": "workspace:*",
+    "@fastify/cookie": "11.1.1",
+    "@fastify/multipart": "^10.1.0",
+    "@fastify/static": "^9.0.0",
+    "@nestjs/common": "11.1.28",
+    "@nestjs/core": "11.1.28",
+    "@nestjs/platform-fastify": "11.1.28",
+    "@nestjs/swagger": "^11.4.5",
+    "@prisma/adapter-pg": "7.8.0",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.14.2",
+    "dotenv": "17.2.3",
+    "fastify": "5.10.0",
+    "nodemailer": "^9.0.3",
+    "openai": "6.46.0",
+    "pg": "8.16.3",
+    "redis": "^6.1.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@nestjs/cli": "11.0.16",
+    "@nestjs/testing": "11.1.28",
+    "@types/node": "24.10.1",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "8.15.6",
+    "eslint": "9.39.1",
+    "globals": "16.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.0",
+    "vitest": "4.0.16"
+  }
+}

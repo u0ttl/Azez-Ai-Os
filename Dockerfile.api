@@ -1,0 +1,26 @@
+FROM node:24-bookworm-slim AS dependencies
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/database/package.json packages/database/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+FROM dependencies AS builder
+COPY . .
+RUN pnpm --filter @azez/api... build
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production API_PORT=4000
+RUN groupadd --system azez && useradd --system --gid azez --home /app azez
+COPY --from=builder --chown=azez:azez /app/node_modules ./node_modules
+COPY --from=builder --chown=azez:azez /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder --chown=azez:azez /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=azez:azez /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=azez:azez /app/packages/database ./packages/database
+COPY --from=builder --chown=azez:azez /app/package.json ./package.json
+USER azez
+EXPOSE 4000
+CMD ["node", "apps/api/dist/src/main.js"]

@@ -1,0 +1,25 @@
+FROM node:24-bookworm-slim AS dependencies
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/database/package.json packages/database/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+FROM dependencies AS builder
+WORKDIR /app
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+COPY . .
+RUN pnpm --filter @azez/web build
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
+RUN groupadd --system azez && useradd --system --gid azez --home /app azez
+COPY --from=builder --chown=azez:azez /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=azez:azez /app/apps/web/.next/static ./apps/web/.next/static
+USER azez
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]
