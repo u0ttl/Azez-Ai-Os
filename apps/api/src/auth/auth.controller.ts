@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Req, Res } from "@nestjs/common";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { CSRF_COOKIE } from "../security/csrf.guard.js";
+import { CSRF_COOKIE, cookieSameSite, cookieSecure } from "../security/csrf.guard.js";
 import { CsrfService } from "../security/csrf.service.js";
 import { AllowUnverified } from "./allow-unverified.decorator.js";
 import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyEmailDto } from "./auth.dto.js";
@@ -20,8 +20,8 @@ export class AuthController {
     const csrfToken = this.csrf.issue();
     reply.setCookie(CSRF_COOKIE, csrfToken, {
       httpOnly: false,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: cookieSameSite(),
+      secure: cookieSecure(),
       path: "/",
       maxAge: 60 * 60,
     });
@@ -57,21 +57,21 @@ export class AuthController {
   @Delete("sessions/:sessionId")
   async revokeSession(@Param("sessionId", new ParseUUIDPipe()) sessionId: string, @Req() request: AuthenticatedRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<{ success: true }> {
     await this.auth.revokeSession(request.auth.userId, sessionId, this.metadata(request));
-    if (sessionId === request.auth.sessionId) reply.clearCookie(SESSION_COOKIE, { path: "/" });
+    if (sessionId === request.auth.sessionId) reply.clearCookie(SESSION_COOKIE, { path: "/", sameSite: cookieSameSite(), secure: cookieSecure() });
     return { success: true };
   }
 
   @Post("logout")
   async logout(@Req() request: AuthenticatedRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<{ success: true }> {
     await this.auth.logout(request.cookies[SESSION_COOKIE], this.metadata(request));
-    reply.clearCookie(SESSION_COOKIE, { path: "/" });
+    reply.clearCookie(SESSION_COOKIE, { path: "/", sameSite: cookieSameSite(), secure: cookieSecure() });
     return { success: true };
   }
 
   @Post("logout-all")
   async logoutAll(@Req() request: AuthenticatedRequest, @Res({ passthrough: true }) reply: FastifyReply): Promise<{ success: true }> {
     await this.auth.revokeAllSessions(request.auth.userId, this.metadata(request));
-    reply.clearCookie(SESSION_COOKIE, { path: "/" });
+    reply.clearCookie(SESSION_COOKIE, { path: "/", sameSite: cookieSameSite(), secure: cookieSecure() });
     return { success: true };
   }
 
@@ -115,8 +115,8 @@ export class AuthController {
   private setSessionCookie(reply: FastifyReply, session: SessionResult): void {
     reply.setCookie(SESSION_COOKIE, session.token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: cookieSameSite(),
+      secure: cookieSecure(),
       path: "/",
       expires: session.expiresAt,
     });
