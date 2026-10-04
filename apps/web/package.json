@@ -1,1 +1,33 @@
-ewogICJwYWNrYWdlTWFuYWdlciI6ICJwbnBtQDExLjcuMCIsCiAgIm5hbWUiOiAiQGF6ZXovd2ViIiwKICAidmVyc2lvbiI6ICIwLjEuMCIsCiAgInByaXZhdGUiOiB0cnVlLAogICJzY3JpcHRzIjogewogICAgImRldiI6ICJuZXh0IGRldiAtLXBvcnQgMzAwMCIsCiAgICAiYnVpbGQiOiAibmV4dCBidWlsZCIsCiAgICAic3RhcnQiOiAibmV4dCBzdGFydCAtLXBvcnQgMzAwMCIsCiAgICAibGludCI6ICJlc2xpbnQgLiAtLW1heC13YXJuaW5ncz0wIiwKICAgICJ0eXBlY2hlY2siOiAidHNjIC0tbm9FbWl0IiwKICAgICJ0ZXN0IjogInZpdGVzdCBydW4iCiAgfSwKICAiZGVwZW5kZW5jaWVzIjogewogICAgIm5leHQiOiAiMTYuMi4xMCIsCiAgICAicmVhY3QiOiAiMTkuMi43IiwKICAgICJyZWFjdC1kb20iOiAiMTkuMi43IiwKICAgICJ0aHJlZSI6ICJeMC4xODYuMSIKICB9LAogICJkZXZEZXBlbmRlbmNpZXMiOiB7CiAgICAiQGVzbGludC9qcyI6ICI5LjM5LjEiLAogICAgIkB0eXBlcy9ub2RlIjogIjI0LjEwLjEiLAogICAgIkB0eXBlcy9yZWFjdCI6ICIxOS4yLjciLAogICAgIkB0eXBlcy9yZWFjdC1kb20iOiAiMTkuMi4zIiwKICAgICJAdHlwZXMvdGhyZWUiOiAiXjAuMTg2LjAiLAogICAgImVzbGludCI6ICI5LjM5LjEiLAogICAgImVzbGludC1jb25maWctbmV4dCI6ICIxNi4yLjEwIiwKICAgICJnbG9iYWxzIjogIjE2LjUuMCIsCiAgICAidHlwZXNjcmlwdCI6ICI1LjkuMyIsCiAgICAidHlwZXNjcmlwdC1lc2xpbnQiOiAiOC41MC4wIiwKICAgICJ2aXRlc3QiOiAiNC4wLjE2IgogIH0KfQo=
+{
+  "packageManager": "pnpm@11.7.0",
+  "name": "@azez/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "^0.186.0",
+    "eslint": "9.39.1",
+    "eslint-config-next": "16.2.10",
+    "globals": "16.5.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.0",
+    "vitest": "4.0.16"
+  }
+}
